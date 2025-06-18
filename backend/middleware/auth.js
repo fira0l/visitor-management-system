@@ -25,10 +25,6 @@ const auth = async (req, res, next) => {
       return next(new AppError("Invalid token or user inactive.", 401))
     }
 
-    // Update last login
-    user.lastLogin = new Date()
-    await user.save({ validateBeforeSave: false })
-
     req.user = user
     next()
   } catch (error) {

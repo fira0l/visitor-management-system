@@ -1,6 +1,7 @@
 const VisitorRequest = require("../models/VisitorRequest")
 const CheckInOut = require("../models/CheckInOut")
 const { AppError } = require("../utils/appError")
+const { sendEmail } = require("../utils/emailService")
 
 const createRequest = async (req, res, next) => {
   try {
@@ -104,7 +105,54 @@ const reviewRequest = async (req, res, next) => {
     request.reviewComments = reviewComments
 
     await request.save()
-    await request.populate(["requestedBy", "reviewedBy"])
+    // Ensure populated fields include email for requestedBy
+    await request.populate([
+        { path: 'requestedBy', select: 'fullName username email department' },
+        { path: 'reviewedBy', select: 'fullName username' }
+    ]);
+
+    // Send email notification (best-effort)
+    if (request.requestedBy && request.requestedBy.email) {
+      let subject = '';
+      let htmlBody = '';
+      let textBody = '';
+
+      if (request.status === 'approved') {
+        subject = `Visitor Request Approved: ${request.visitorName}`;
+        textBody = `Hello ${request.requestedBy.fullName},\n\nYour visitor request for ${request.visitorName} (ID: ${request.visitorId}) scheduled for ${new Date(request.scheduledDate).toLocaleDateString()} at ${request.scheduledTime} has been approved.\n\nApproval Code: ${request.approvalCode}\n\nReviewed by: ${request.reviewedBy.fullName}\nComments: ${request.reviewComments || 'N/A'}\n\nThank you,\nThe Admin Team`;
+        htmlBody = `
+          <p>Hello ${request.requestedBy.fullName},</p>
+          <p>Your visitor request for <strong>${request.visitorName}</strong> (ID: ${request.visitorId}) scheduled for <strong>${new Date(request.scheduledDate).toLocaleDateString()} at ${request.scheduledTime}</strong> has been <strong>approved</strong>.</p>
+          <p><strong>Approval Code:</strong> ${request.approvalCode}</p>
+          <p><strong>Reviewed by:</strong> ${request.reviewedBy.fullName}</p>
+          <p><strong>Comments:</strong> ${request.reviewComments || 'N/A'}</p>
+          <p>Thank you,<br>The Admin Team</p>
+        `;
+      } else if (request.status === 'declined') {
+        subject = `Visitor Request Declined: ${request.visitorName}`;
+        textBody = `Hello ${request.requestedBy.fullName},\n\nYour visitor request for ${request.visitorName} (ID: ${request.visitorId}) scheduled for ${new Date(request.scheduledDate).toLocaleDateString()} at ${request.scheduledTime} has been declined.\n\nReviewed by: ${request.reviewedBy.fullName}\nReason: ${request.reviewComments || 'No specific reason provided.'}\n\nPlease contact support if you have any questions.\n\nThank you,\nThe Admin Team`;
+        htmlBody = `
+          <p>Hello ${request.requestedBy.fullName},</p>
+          <p>Your visitor request for <strong>${request.visitorName}</strong> (ID: ${request.visitorId}) scheduled for <strong>${new Date(request.scheduledDate).toLocaleDateString()} at ${request.scheduledTime}</strong> has been <strong>declined</strong>.</p>
+          <p><strong>Reviewed by:</strong> ${request.reviewedBy.fullName}</p>
+          <p><strong>Reason:</strong> ${request.reviewComments || 'No specific reason provided.'}</p>
+          <p>Please contact support if you have any questions.</p>
+          <p>Thank you,<br>The Admin Team</p>
+        `;
+      }
+
+      if (subject) {
+        try {
+          await sendEmail(request.requestedBy.email, subject, htmlBody, textBody);
+          console.log(`Review notification email sent to ${request.requestedBy.email} for request ${request._id}`);
+        } catch (emailError) {
+          console.error(`Failed to send review notification email to ${request.requestedBy.email} for request ${request._id}:`, emailError);
+          // Do not block review process if email fails
+        }
+      }
+    } else {
+        console.warn(`Could not send review email: requestedBy user or email not found for request ${request._id}`);
+    }
 
     res.json({
       success: true,

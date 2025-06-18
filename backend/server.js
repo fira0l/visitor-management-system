@@ -1,5 +1,4 @@
 const express = require("express")
-const mongoose = require("mongoose")
 const cors = require("cors")
 const helmet = require("helmet")
 const rateLimit = require("express-rate-limit")
@@ -7,6 +6,9 @@ const dotenv = require("dotenv")
 
 // Load environment variables
 dotenv.config()
+
+// Database Connection
+const connectDB = require("./config/database")
 
 // Import routes
 const authRoutes = require("./routes/auth")
@@ -69,19 +71,8 @@ app.use("*", (req, res) => {
   })
 })
 
-// Database connection
-mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("✅ Connected to MongoDB")
-  })
-  .catch((error) => {
-    console.error("❌ MongoDB connection error:", error)
-    process.exit(1)
-  })
+// Connect to database
+connectDB()
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err, promise) => {

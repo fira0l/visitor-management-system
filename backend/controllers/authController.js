@@ -1,6 +1,7 @@
 const User = require("../models/User")
 const { generateToken } = require("../utils/generateToken")
 const { AppError } = require("../utils/appError")
+const { sendEmail } = require("../utils/emailService")
 
 const register = async (req, res, next) => {
   try {
@@ -25,6 +26,24 @@ const register = async (req, res, next) => {
       fullName,
       createdBy: req.user ? req.user._id : null,
     })
+
+    // Send welcome email (best-effort)
+    try {
+      const subject = "Welcome to Visitor Management System!";
+      const textBody = `Hello ${user.fullName},\n\nWelcome to the Visitor Management System! Your account has been successfully created.\nYour username is: ${user.username}\n\nPlease log in to start using the system.\n\nThank you,\nThe Admin Team`;
+      const htmlBody = `
+        <p>Hello ${user.fullName},</p>
+        <p>Welcome to the Visitor Management System! Your account has been successfully created.</p>
+        <p>Your username is: <strong>${user.username}</strong></p>
+        <p>Please log in to start using the system.</p>
+        <p>Thank you,<br>The Admin Team</p>
+      `;
+      await sendEmail(user.email, subject, htmlBody, textBody);
+      console.log(`Registration email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error(`Failed to send registration email to ${user.email}:`, emailError);
+      // Do not block registration if email fails
+    }
 
     // Generate JWT token
     const token = generateToken(user._id)

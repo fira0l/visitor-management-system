@@ -65,8 +65,13 @@ const visitorRequestSchema = new mongoose.Schema(
       type: Date,
       required: [true, "Scheduled date is required"],
       validate: {
-        validator: (date) => date >= new Date().setHours(0, 0, 0, 0),
-        message: "Scheduled date cannot be in the past",
+        validator: function(date) {
+          if (this.status === 'pending' || this.status === 'approved') {
+            return date >= new Date().setHours(0, 0, 0, 0);
+          }
+          return true;
+        },
+        message: "Scheduled date cannot be in the past for 'pending' or 'approved' requests",
       },
     },
     scheduledTime: {
