@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Navigate } from "react-router-dom"
-import { useAuth } from "../contexts/AuthContext"
+import { useAuth } from "../contexts/AuthContext.tsx"
 import toast from "react-hot-toast"
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
 import { UserGroupIcon } from "@heroicons/react/24/solid" // Import UserGroupIcon
