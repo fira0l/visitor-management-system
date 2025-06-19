@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { AuthProvider } from "./contexts/AuthContext.tsx"
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx"
 import Login from "./pages/Login.tsx"
+import Signup from "./pages/Signup.tsx"
 import Dashboard from "./pages/Dashboard.tsx"
 import VisitorRequests from "./pages/VisitorRequests.tsx"
 import CreateRequest from "./pages/CreateRequest.tsx"
@@ -9,6 +10,7 @@ import Analytics from "./pages/Analytics.tsx"
 import CheckInOut from "./pages/CheckInOut.tsx"
 import Layout from "./components/Layout.tsx"
 import { Toaster } from "react-hot-toast"
+import SecurityReview from "./pages/SecurityReview.tsx"
 
 function App() {
   return (
@@ -40,6 +42,7 @@ function App() {
             }}
           />
           <Routes>
+            <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route
               path="/"
@@ -73,6 +76,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin"]}>
                     <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="security-review"
+                element={
+                  <ProtectedRoute allowedRoles={["security"]}>
+                    <SecurityReview />
                   </ProtectedRoute>
                 }
               />

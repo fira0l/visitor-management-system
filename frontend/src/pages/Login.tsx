@@ -63,7 +63,12 @@ const Login: React.FC = () => {
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
             {process.env.REACT_APP_APP_NAME || "INSA Visitor Management"}
           </h2>
-          <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
+          <p className="mt-2 text-sm text-gray-600">
+            Sign in to your account or{" "}
+            <a href="/signup" className="text-blue-600 hover:underline">
+              Sign up
+            </a>
+          </p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8">
