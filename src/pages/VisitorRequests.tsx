@@ -7,6 +7,31 @@ import { visitorAPI } from "../services/api"
 import toast from "react-hot-toast"
 import { EyeIcon, CheckIcon, XMarkIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline"
 
+const formatCustomDateTime = (isoString: string | undefined | null): string => {
+  if (!isoString) {
+    return "N/A";
+  }
+  try {
+    const dateObj = new Date(isoString);
+    if (isNaN(dateObj.getTime())) {
+      // Log error or return a specific string for invalid dates from source
+      console.warn("Attempted to format an invalid date string:", isoString);
+      return "Invalid Source Date";
+    }
+    return dateObj.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (error) {
+    console.error("Error formatting date:", isoString, error);
+    return "Formatting Error"; // Or "Invalid Date"
+  }
+};
+
 interface VisitorRequest {
   _id: string
   visitorName: string
@@ -220,6 +245,9 @@ const VisitorRequests: React.FC = () => {
                     Scheduled
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created At
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -243,6 +271,9 @@ const VisitorRequests: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div>{new Date(request.scheduledDate).toLocaleDateString()}</div>
                       <div>{request.scheduledTime}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatCustomDateTime(request.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
