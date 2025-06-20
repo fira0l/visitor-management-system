@@ -13,6 +13,7 @@
       "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow: hidden; /* Prevent body scroll */
   }
 
   code {
@@ -51,6 +52,50 @@
 
   .card-body {
     @apply px-4 py-5 sm:p-6;
+  }
+
+  /* Layout specific styles */
+  .sidebar-nav {
+    @apply flex-1 overflow-y-auto;
+  }
+
+  .sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-nav::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
+
+  .sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  .main-content {
+    @apply flex-1 overflow-y-auto;
+  }
+
+  .main-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .main-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  .main-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  .main-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
   }
 }
 

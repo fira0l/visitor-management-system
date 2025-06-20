@@ -7,14 +7,14 @@ type RegisterPayload = {
   username: string;
   email: string;
   password: string;
-  role: "department_user" | "security" | "gate" | "admin";
+  role: "department_user" | "security" | "gate";
   fullName: string;
 };
 
 const Signup: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"department_user" | "security" | "gate" | "admin" | "">("");
+  const [role, setRole] = useState<"department_user" | "security" | "gate" | "">("");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [department, setDepartment] = useState("");
@@ -45,27 +45,27 @@ const Signup: React.FC = () => {
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Sign up for an account</h2>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="bg-white rounded-lg shadow-md p-8 animate-fade-in">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input id="fullName" name="fullName" type="text" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" value={fullName} onChange={e => setFullName(e.target.value)} disabled={loading} />
+              <input id="fullName" name="fullName" type="text" required className="input-field mt-1" value={fullName} onChange={e => setFullName(e.target.value)} disabled={loading} />
             </div>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
-              <input id="username" name="username" type="text" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" value={username} onChange={e => setUsername(e.target.value)} disabled={loading} />
+              <input id="username" name="username" type="text" required className="input-field mt-1" value={username} onChange={e => setUsername(e.target.value)} disabled={loading} />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-              <input id="email" name="email" type="email" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" value={email} onChange={e => setEmail(e.target.value)} disabled={loading} />
+              <input id="email" name="email" type="email" required className="input-field mt-1" value={email} onChange={e => setEmail(e.target.value)} disabled={loading} />
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-              <input id="password" name="password" type="password" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} />
+              <input id="password" name="password" type="password" required className="input-field mt-1" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} />
             </div>
             <div>
               <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-              <select id="role" name="role" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" value={role} onChange={e => setRole(e.target.value as any)} disabled={loading}>
+              <select id="role" name="role" required className="input-field mt-1" value={role} onChange={e => setRole(e.target.value as RegisterPayload["role"])} disabled={loading}>
                 <option value="">Select a role</option>
                 <option value="department_user">Department User</option>
                 <option value="security">Security</option>
@@ -75,12 +75,12 @@ const Signup: React.FC = () => {
             {role === "department_user" && (
               <div>
                 <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
-                <input id="department" name="department" type="text" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" value={department} onChange={e => setDepartment(e.target.value)} disabled={loading} />
+                <input id="department" name="department" type="text" required className="input-field mt-1" value={department} onChange={e => setDepartment(e.target.value)} disabled={loading} />
               </div>
             )}
-            <div>
-              <button type="submit" disabled={loading} className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">{loading ? "Signing up..." : "Sign up"}</button>
-            </div>
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+              {loading ? "Signing up..." : "Sign Up"}
+            </button>
           </form>
         </div>
       </div>

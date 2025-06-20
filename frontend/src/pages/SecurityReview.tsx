@@ -50,80 +50,88 @@ const SecurityReview: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow mt-8">
-      <h2 className="text-2xl font-bold mb-4">Visitor Requests (Security Review)</h2>
-      <div className="mb-4 flex gap-2">
-        <label className="font-medium">Filter by status:</label>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border rounded px-2 py-1">
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="declined">Declined</option>
-        </select>
-      </div>
-      {loading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div className="text-red-600">{error}</div>
-      ) : filteredRequests.length === 0 ? (
-        <div className="text-gray-500 py-4 text-center">No requests found.</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRequests.map(r => (
-                <tr key={r._id}>
-                  <td className="px-4 py-2 whitespace-nowrap">{r.visitorName}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">{r.purpose}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">{r.scheduledDate?.slice(0, 10)}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[r.status] || "bg-gray-100 text-gray-800"}`}>
-                      {r.status.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap flex flex-col gap-2">
-                    {r.status === "pending" && (
-                      <>
-                        <textarea
-                          className="border rounded px-2 py-1 mb-2 w-full"
-                          placeholder="Review comments (optional)"
-                          value={reviewingId === r._id ? reviewComments : ""}
-                          onChange={e => setReviewComments(e.target.value)}
-                          disabled={reviewingId !== r._id}
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
-                            disabled={reviewingId === r._id}
-                            onClick={() => handleReview(r._id, "approved")}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition-colors"
-                            disabled={reviewingId === r._id}
-                            onClick={() => handleReview(r._id, "declined")}
-                          >
-                            Decline
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="max-w-5xl mx-auto p-6 animate-fade-in">
+      <div className="card">
+        <div className="card-header flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Visitor Requests (Security Review)</h2>
+          <div className="flex gap-2">
+            <label className="font-medium">Filter by status:</label>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-field">
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="declined">Declined</option>
+            </select>
+          </div>
         </div>
-      )}
+        <div className="card-body">
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : error ? (
+            <div className="text-red-600 text-center py-4">{error}</div>
+          ) : filteredRequests.length === 0 ? (
+            <div className="text-gray-500 py-4 text-center">No requests found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredRequests.map(r => (
+                    <tr key={r._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-2 whitespace-nowrap">{r.visitorName}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{r.purpose}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{r.scheduledDate?.slice(0, 10)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[r.status] || "bg-gray-100 text-gray-800"}`}>
+                          {r.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap flex flex-col gap-2">
+                        {r.status === "pending" && (
+                          <>
+                            <textarea
+                              className="input-field mb-2 w-full"
+                              placeholder="Review comments (optional)"
+                              value={reviewingId === r._id ? reviewComments : ""}
+                              onChange={e => setReviewComments(e.target.value)}
+                              disabled={reviewingId !== r._id}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                className="btn-success flex-1"
+                                disabled={reviewingId === r._id}
+                                onClick={() => handleReview(r._id, "approved")}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                className="btn-danger flex-1"
+                                disabled={reviewingId === r._id}
+                                onClick={() => handleReview(r._id, "declined")}
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

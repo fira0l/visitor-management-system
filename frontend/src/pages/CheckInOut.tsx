@@ -52,57 +52,74 @@ const CheckInOut: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow mt-8">
-      <h2 className="text-2xl font-bold mb-4">Visitor Check In/Out</h2>
-      {loading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div className="text-red-600">{error}</div>
-      ) : visitors.length === 0 ? (
-        <div className="text-gray-500 py-4 text-center">No visitors to check in/out.</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {visitors.map(v => (
-                <tr key={v._id}>
-                  <td className="px-4 py-2 whitespace-nowrap">{v.visitorName}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">{v.purpose}</td>
-                  <td className="px-4 py-2 whitespace-nowrap capitalize">{v.status.replace("_", " ")}</td>
-                  <td className="px-4 py-2 whitespace-nowrap flex gap-2">
-                    {v.status === "approved" && (
-                      <button
-                        className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-                        disabled={processingId === v._id}
-                        onClick={() => handleCheckIn(v._id)}
-                      >
-                        Check In
-                      </button>
-                    )}
-                    {v.status === "checked_in" && (
-                      <button
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
-                        disabled={processingId === v._id}
-                        onClick={() => handleCheckOut(v._id)}
-                      >
-                        Check Out
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="max-w-5xl mx-auto p-6 animate-fade-in">
+      <div className="card">
+        <div className="card-header">
+          <h2 className="text-2xl font-bold mb-4">Visitor Check In/Out</h2>
         </div>
-      )}
+        <div className="card-body">
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : error ? (
+            <div className="text-red-600 text-center py-4">{error}</div>
+          ) : visitors.length === 0 ? (
+            <div className="text-gray-500 py-4 text-center">No visitors to check in/out.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {visitors.map(v => (
+                    <tr key={v._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-2 whitespace-nowrap">{v.visitorName}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{v.purpose}</td>
+                      <td className="px-4 py-2 whitespace-nowrap capitalize">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          v.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                          v.status === 'checked_in' ? 'bg-green-100 text-green-800' :
+                          v.status === 'checked_out' ? 'bg-gray-100 text-gray-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {v.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap flex gap-2">
+                        {v.status === "approved" && (
+                          <button
+                            className="btn-primary"
+                            disabled={processingId === v._id}
+                            onClick={() => handleCheckIn(v._id)}
+                          >
+                            Check In
+                          </button>
+                        )}
+                        {v.status === "checked_in" && (
+                          <button
+                            className="btn-success"
+                            disabled={processingId === v._id}
+                            onClick={() => handleCheckOut(v._id)}
+                          >
+                            Check Out
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

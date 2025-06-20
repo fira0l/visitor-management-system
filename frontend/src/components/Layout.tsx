@@ -12,6 +12,7 @@ import {
   UserGroupIcon,
   Bars3Icon,
   XMarkIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline"
 import { useState } from "react"
 
@@ -29,10 +30,18 @@ const Layout: React.FC = () => {
     switch (user?.role) {
       case "department_user":
         return [...baseItems, { name: "Create Request", href: "/create-request", icon: PlusIcon }]
+      case "security":
+        return [...baseItems, { name: "Security Review", href: "/security-review", icon: DocumentTextIcon }]
       case "gate":
         return [...baseItems, { name: "Check In/Out", href: "/checkin-checkout", icon: UserGroupIcon }]
       case "admin":
-        return [...baseItems, { name: "Analytics", href: "/analytics", icon: ChartBarIcon }]
+        return [
+          ...baseItems,
+          { name: "Admin Logs", href: "/admin-logs", icon: ClipboardDocumentListIcon },
+          { name: "Security Review", href: "/security-review", icon: DocumentTextIcon },
+          { name: "Check In/Out", href: "/checkin-checkout", icon: UserGroupIcon },
+          { name: "Analytics", href: "/analytics", icon: ChartBarIcon }
+        ]
       default:
         return baseItems
     }
@@ -50,7 +59,7 @@ const Layout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="flex">
+      <div className="flex h-screen">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
@@ -62,9 +71,10 @@ const Layout: React.FC = () => {
         <div
           className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}
+          } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}
         >
-          <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200">
+          {/* Header */}
+          <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
             <h1 className="text-xl font-bold text-gray-900">
               {process.env.REACT_APP_APP_NAME || "INSA Visitor System"}
             </h1>
@@ -76,7 +86,8 @@ const Layout: React.FC = () => {
             </button>
           </div>
 
-          <nav className="mt-8 px-4">
+          {/* Navigation */}
+          <nav className="sidebar-nav px-4 py-6">
             <ul className="space-y-2">
               {navigationItems.map((item) => {
                 const isActive = location.pathname === item.href
@@ -85,11 +96,13 @@ const Layout: React.FC = () => {
                     <Link
                       to={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                        isActive ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        isActive 
+                          ? "bg-blue-100 text-blue-700 border-l-4 border-blue-600" 
+                          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                       }`}
                     >
-                      <item.icon className="mr-3 h-5 w-5" />
+                      <item.icon className={`mr-3 h-5 w-5 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
                       {item.name}
                     </Link>
                   </li>
@@ -98,8 +111,8 @@ const Layout: React.FC = () => {
             </ul>
           </nav>
 
-          {/* User info and logout */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+          {/* User info and logout - Fixed at bottom */}
+          <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900 truncate">{user?.fullName}</p>
@@ -108,7 +121,7 @@ const Layout: React.FC = () => {
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-200"
                 title="Logout"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
@@ -118,9 +131,9 @@ const Layout: React.FC = () => {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 lg:ml-64">
+        <div className="flex-1 lg:ml-64 flex flex-col">
           {/* Mobile header */}
-          <div className="lg:hidden bg-white shadow-sm border-b border-gray-200">
+          <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between px-4 py-3">
               <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-md text-gray-400 hover:text-gray-600">
                 <Bars3Icon className="h-6 w-6" />
@@ -132,7 +145,8 @@ const Layout: React.FC = () => {
             </div>
           </div>
 
-          <main className="p-4 lg:p-8">
+          {/* Main content area */}
+          <main className="main-content p-4 lg:p-8">
             <Outlet />
           </main>
         </div>

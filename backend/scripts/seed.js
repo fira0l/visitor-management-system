@@ -14,8 +14,8 @@ const seedData = async () => {
     await VisitorRequest.deleteMany({})
     console.log("🗑️  Cleared existing data")
 
-    // Create users
-    const users = [
+    // Create users individually to ensure password hashing works
+    const userData = [
       {
         username: "admin",
         email: "admin@insa.com",
@@ -47,7 +47,11 @@ const seedData = async () => {
       },
     ]
 
-    const createdUsers = await User.insertMany(users)
+    const createdUsers = []
+    for (const userDataItem of userData) {
+      const user = await User.create(userDataItem)
+      createdUsers.push(user)
+    }
     console.log(`👥 Created ${createdUsers.length} users`)
 
     // Create sample visitor requests

@@ -11,6 +11,7 @@ import CheckInOut from "./pages/CheckInOut.tsx"
 import Layout from "./components/Layout.tsx"
 import { Toaster } from "react-hot-toast"
 import SecurityReview from "./pages/SecurityReview.tsx"
+import AdminLogs from "./pages/AdminLogs.tsx"
 
 function App() {
   return (
@@ -84,6 +85,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["security"]}>
                     <SecurityReview />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin-logs"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <AdminLogs />
                   </ProtectedRoute>
                 }
               />
