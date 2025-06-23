@@ -43,4 +43,53 @@ router.patch("/:id/status", authorize("admin"), async (req, res, next) => {
   }
 })
 
+// Create user (admin only)
+router.post("/", authorize("admin"), async (req, res, next) => {
+  try {
+    const { username, email, password, role, department, fullName } = req.body;
+    if (!username || !email || !password || !role || !fullName) {
+      return next(new AppError("Missing required fields", 400));
+    }
+    // Prevent duplicate
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return next(new AppError("User with this email or username already exists", 400));
+    }
+    const user = await User.create({ username, email, password, role, department, fullName, createdBy: req.user._id });
+    res.status(201).json({ success: true, message: "User created successfully", user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update user (admin only)
+router.patch("/:id", authorize("admin"), async (req, res, next) => {
+  try {
+    const { username, email, role, department, fullName, isActive } = req.body;
+    const updateData = { username, email, role, department, fullName, isActive };
+    // Remove undefined fields
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+    res.json({ success: true, message: "User updated successfully", user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete user (admin only)
+router.delete("/:id", authorize("admin"), async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router

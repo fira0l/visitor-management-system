@@ -4,6 +4,7 @@ const cors = require("cors")
 const helmet = require("helmet")
 const rateLimit = require("express-rate-limit")
 const dotenv = require("dotenv")
+const path = require("path")
 
 // Load environment variables
 dotenv.config()
@@ -43,6 +44,9 @@ app.use(cors(corsOptions))
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }))
 app.use(express.urlencoded({ extended: true, limit: "10mb" }))
+
+// Serve uploaded photos
+app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
 // API routes
 app.use("/api/auth", authRoutes)

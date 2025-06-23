@@ -4,8 +4,23 @@ const { AppError } = require("../utils/appError")
 
 const createRequest = async (req, res, next) => {
   try {
+    // Handle photo upload
+    let photoPath = null;
+    if (req.file) {
+      // Store relative path for serving
+      photoPath = `/uploads/${req.file.filename}`;
+    }
+
+    // Ensure nationalId is present
+    const { nationalId, ...rest } = req.body;
+    if (!nationalId) {
+      return res.status(400).json({ success: false, message: "National ID is required" });
+    }
+
     const visitorRequest = await VisitorRequest.create({
-      ...req.body,
+      ...rest,
+      nationalId,
+      photo: photoPath,
       requestedBy: req.user._id,
       department: req.user.department,
     })
@@ -255,6 +270,18 @@ const getAnalytics = async (req, res, next) => {
           approved: {
             $sum: { $cond: [{ $eq: ["$status", "approved"] }, 1, 0] },
           },
+          declined: {
+            $sum: { $cond: [{ $eq: ["$status", "declined"] }, 1, 0] },
+          },
+          pending: {
+            $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
+          },
+          checkedIn: {
+            $sum: { $cond: [{ $eq: ["$status", "checked_in"] }, 1, 0] },
+          },
+          checkedOut: {
+            $sum: { $cond: [{ $eq: ["$status", "checked_out"] }, 1, 0] },
+          },
         },
       },
       { $sort: { count: -1 } },
@@ -277,6 +304,44 @@ const getAnalytics = async (req, res, next) => {
   }
 }
 
+// Admin: Update any visitor request
+const updateRequest = async (req, res, next) => {
+  try {
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.photo = `/uploads/${req.file.filename}`;
+    }
+    // Prevent changing requestedBy/department via update
+    delete updateData.requestedBy;
+    delete updateData.department;
+
+    const request = await VisitorRequest.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    if (!request) {
+      return res.status(404).json({ success: false, message: "Visitor request not found" });
+    }
+    res.json({ success: true, message: "Visitor request updated", request });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin: Delete any visitor request
+const deleteRequest = async (req, res, next) => {
+  try {
+    const request = await VisitorRequest.findByIdAndDelete(req.params.id);
+    if (!request) {
+      return res.status(404).json({ success: false, message: "Visitor request not found" });
+    }
+    res.json({ success: true, message: "Visitor request deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createRequest,
   getRequests,
@@ -284,4 +349,6 @@ module.exports = {
   checkIn,
   checkOut,
   getAnalytics,
+  updateRequest,
+  deleteRequest,
 }

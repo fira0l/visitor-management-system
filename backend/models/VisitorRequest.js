@@ -14,6 +14,12 @@ const visitorRequestSchema = new mongoose.Schema(
       trim: true,
       maxlength: [50, "Visitor ID cannot exceed 50 characters"],
     },
+    nationalId: {
+      type: String,
+      required: [true, "National ID is required"],
+      trim: true,
+      maxlength: [50, "National ID cannot exceed 50 characters"],
+    },
     visitorPhone: {
       type: String,
       required: [true, "Visitor phone is required"],
@@ -24,6 +30,10 @@ const visitorRequestSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Please enter a valid email"],
+    },
+    photo: {
+      type: String, // file path or base64 string
+      required: false,
     },
     purpose: {
       type: String,
