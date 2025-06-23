@@ -57,9 +57,13 @@ export const authAPI = {
 }
 
 export const visitorAPI = {
-  createRequest: async (requestData: Partial<VisitorRequest>) => {
-    const response = await api.post("/visitors/request", requestData)
-    return response.data
+  createRequest: async (requestData: Partial<VisitorRequest> | FormData) => {
+    let config = {};
+    if (requestData instanceof FormData) {
+      config = { headers: { 'Content-Type': 'multipart/form-data' } };
+    }
+    const response = await api.post("/visitors/request", requestData, config);
+    return response.data;
   },
 
   getRequests: async (params: any = {}) => {
@@ -94,10 +98,25 @@ export const userAPI = {
     return response.data
   },
 
+  createUser: async (userData: Partial<User> & { password: string }) => {
+    const response = await api.post("/users", userData);
+    return response.data;
+  },
+
+  updateUser: async (id: string, userData: Partial<User>) => {
+    const response = await api.patch(`/users/${id}`, userData);
+    return response.data;
+  },
+
+  deleteUser: async (id: string) => {
+    const response = await api.delete(`/users/${id}`);
+    return response.data;
+  },
+
   updateUserStatus: async (id: string, isActive: boolean) => {
     const response = await api.patch(`/users/${id}/status`, { isActive })
     return response.data
   },
 }
 
-export default api
+export default api 

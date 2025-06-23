@@ -8,6 +8,7 @@ const CheckInOut: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchVisitors = async () => {
@@ -73,6 +74,8 @@ const CheckInOut: React.FC = () => {
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">National ID</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Photo</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
@@ -82,6 +85,16 @@ const CheckInOut: React.FC = () => {
                     <tr key={v._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-2 whitespace-nowrap">{v.visitorName}</td>
                       <td className="px-4 py-2 whitespace-nowrap">{v.purpose}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{v.nationalId}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {v.photo ? (
+                          <button onClick={() => setPhotoPreview(v.photo.startsWith("/uploads") ? v.photo : `/uploads/${v.photo}`)} className="focus:outline-none">
+                            <img src={v.photo.startsWith("/uploads") ? v.photo : `/uploads/${v.photo}`} alt="Visitor" className="h-12 w-12 object-cover rounded-full border hover:scale-110 transition-transform" />
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-400">No Photo</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2 whitespace-nowrap capitalize">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${
                           v.status === 'approved' ? 'bg-blue-100 text-blue-800' :
@@ -120,6 +133,14 @@ const CheckInOut: React.FC = () => {
           )}
         </div>
       </div>
+      {photoPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={() => setPhotoPreview(null)}>
+          <div className="bg-white rounded-lg shadow-lg p-4 relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPhotoPreview(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <img src={photoPreview} alt="Visitor Preview" className="max-w-xs max-h-[70vh] rounded-lg border" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -12,6 +12,7 @@ import Layout from "./components/Layout.tsx"
 import { Toaster } from "react-hot-toast"
 import SecurityReview from "./pages/SecurityReview.tsx"
 import AdminLogs from "./pages/AdminLogs.tsx"
+import UserManagement from "./pages/UserManagement.tsx"
 
 function App() {
   return (
@@ -93,6 +94,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin"]}>
                     <AdminLogs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/users"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <UserManagement />
                   </ProtectedRoute>
                 }
               />

@@ -17,24 +17,40 @@ const CreateRequest: React.FC = () => {
     scheduledDate: "",
     scheduledTime: "",
     priority: "medium",
+    nationalId: "",
   });
+  const [photo, setPhoto] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPhoto(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await visitorAPI.createRequest({
-        ...form,
-        itemsBrought: form.itemsBrought.split(",").map(i => i.trim()).filter(Boolean),
-        visitDuration: { hours: Number(form.visitDurationHours), days: Number(form.visitDurationDays) },
-        department: user?.department || "",
-        priority: form.priority as "low" | "medium" | "high",
-      });
+      const formData = new FormData();
+      formData.append("visitorName", form.visitorName);
+      formData.append("visitorId", form.visitorId);
+      formData.append("visitorPhone", form.visitorPhone);
+      formData.append("visitorEmail", form.visitorEmail);
+      formData.append("purpose", form.purpose);
+      formData.append("itemsBrought", form.itemsBrought);
+      formData.append("visitDurationHours", String(form.visitDurationHours));
+      formData.append("visitDurationDays", String(form.visitDurationDays));
+      formData.append("scheduledDate", form.scheduledDate);
+      formData.append("scheduledTime", form.scheduledTime);
+      formData.append("priority", form.priority);
+      formData.append("nationalId", form.nationalId);
+      if (photo) formData.append("photo", photo);
+      await visitorAPI.createRequest(formData);
       toast.success("Visitor request submitted!");
       setForm({
         visitorName: "",
@@ -48,6 +64,7 @@ const CreateRequest: React.FC = () => {
         scheduledDate: "",
         scheduledTime: "",
         priority: "medium",
+        nationalId: "",
       });
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to submit request");
@@ -120,6 +137,14 @@ const CreateRequest: React.FC = () => {
                   <option value="high">High</option>
                 </select>
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">National ID</label>
+              <input name="nationalId" value={form.nationalId} onChange={handleChange} required className="input-field mt-1" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Visitor Photo</label>
+              <input name="photo" type="file" accept="image/*" onChange={handlePhotoChange} className="input-field mt-1" />
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full">
               {loading ? "Submitting..." : "Submit Request"}

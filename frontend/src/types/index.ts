@@ -15,8 +15,10 @@ export interface VisitorRequest {
   _id: string
   visitorName: string
   visitorId: string
+  nationalId: string
   visitorPhone: string
   visitorEmail?: string
+  photo?: string
   purpose: string
   itemsBrought: string[]
   department: string
@@ -83,6 +85,10 @@ export interface DepartmentStat {
   _id: string
   count: number
   approved: number
+  declined: number
+  pending: number
+  checkedIn: number
+  checkedOut: number
 }
 
 export interface ApiResponse<T> {

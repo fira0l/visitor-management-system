@@ -27,6 +27,11 @@ const AdminLogs: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editRequest, setEditRequest] = useState<VisitorRequest | null>(null);
+  const [editForm, setEditForm] = useState({ nationalId: "", photo: null as File | null });
+  const [editLoading, setEditLoading] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const statusColors: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -143,6 +148,56 @@ const AdminLogs: React.FC = () => {
   };
 
   const statusCounts = getStatusCounts();
+
+  const openEditModal = (request: VisitorRequest) => {
+    setEditRequest(request);
+    setEditForm({ nationalId: request.nationalId, photo: null });
+    setEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditRequest(null);
+  };
+
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, files } = e.target;
+    if (name === "photo" && files) {
+      setEditForm((prev) => ({ ...prev, photo: files[0] }));
+    } else {
+      setEditForm((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editRequest) return;
+    setEditLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("nationalId", editForm.nationalId);
+      if (editForm.photo) formData.append("photo", editForm.photo);
+      await visitorAPI.updateRequest(editRequest._id, formData);
+      toast.success("Visitor request updated");
+      closeEditModal();
+      fetchRequests();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update request");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this visitor request?")) return;
+    try {
+      await visitorAPI.deleteRequest(id);
+      toast.success("Visitor request deleted");
+      fetchRequests();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to delete request");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -304,6 +359,8 @@ const AdminLogs: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">National ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -346,6 +403,18 @@ const AdminLogs: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{request.nationalId}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {request.photo ? (
+                          <button onClick={() => setPhotoPreview(request.photo.startsWith("/uploads") ? request.photo : `/uploads/${request.photo}`)} className="focus:outline-none">
+                            <img src={request.photo.startsWith("/uploads") ? request.photo : `/uploads/${request.photo}`} alt="Visitor" className="h-12 w-12 object-cover rounded-full border hover:scale-110 transition-transform" />
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-400">No Photo</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[request.status]}`}>
                           {request.status.replace("_", " ")}
                         </span>
@@ -355,9 +424,15 @@ const AdminLogs: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
+                        <button className="text-blue-600 hover:text-blue-900 transition-colors" title="View/Edit" onClick={() => openEditModal(request)}>
                           <EyeIcon className="h-4 w-4" />
+                        </button>
+                        <button className="text-yellow-600 hover:text-yellow-900 transition-colors" title="Edit" onClick={() => openEditModal(request)}>
+                          Edit
+                        </button>
+                        <button className="text-red-600 hover:text-red-900 transition-colors" title="Delete" onClick={() => handleDelete(request._id)}>
+                          Delete
                         </button>
                       </td>
                     </tr>
@@ -432,6 +507,41 @@ const AdminLogs: React.FC = () => {
           </>
         )}
       </div>
+
+      {editModalOpen && editRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button onClick={closeEditModal} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">&times;</button>
+            <h2 className="text-lg font-bold mb-4">Edit Visitor Request</h2>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">National ID</label>
+                <input name="nationalId" value={editForm.nationalId} onChange={handleEditFormChange} required className="input-field mt-1" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Photo</label>
+                <input name="photo" type="file" accept="image/*" onChange={handleEditFormChange} className="input-field mt-1" />
+                {editRequest.photo && (
+                  <img src={editRequest.photo.startsWith("/uploads") ? editRequest.photo : `/uploads/${editRequest.photo}`} alt="Current" className="h-16 w-16 object-cover rounded-full border mt-2" />
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={closeEditModal} className="btn-secondary">Cancel</button>
+                <button type="submit" disabled={editLoading} className="btn-primary">{editLoading ? "Saving..." : "Save"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {photoPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={() => setPhotoPreview(null)}>
+          <div className="bg-white rounded-lg shadow-lg p-4 relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPhotoPreview(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <img src={photoPreview} alt="Visitor Preview" className="max-w-xs max-h-[70vh] rounded-lg border" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

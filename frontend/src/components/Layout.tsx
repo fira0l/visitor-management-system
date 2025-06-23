@@ -37,6 +37,7 @@ const Layout: React.FC = () => {
       case "admin":
         return [
           ...baseItems,
+          { name: "User Management", href: "/admin/users", icon: UserGroupIcon },
           { name: "Admin Logs", href: "/admin-logs", icon: ClipboardDocumentListIcon },
           { name: "Security Review", href: "/security-review", icon: DocumentTextIcon },
           { name: "Check In/Out", href: "/checkin-checkout", icon: UserGroupIcon },
