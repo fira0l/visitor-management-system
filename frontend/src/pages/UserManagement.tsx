@@ -82,9 +82,9 @@ const UserManagement: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6 animate-fade-in">
-      <div className="card">
+      <div className="card bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
         <div className="card-header flex items-center justify-between">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-gray-100">
             <FaUserCircle className="text-blue-500 animate-pop-in" size={28} /> User Management
           </h2>
           <button className="btn-primary flex items-center gap-2 transition-transform hover:scale-105" onClick={openCreate}>
@@ -105,42 +105,42 @@ const UserManagement: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Avatar</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Full Name</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Avatar</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Username</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Full Name</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Role</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Department</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {users.map((u, idx) => (
-                    <tr key={u._id} className="hover:bg-gray-50 transition-colors animate-fade-in" style={{ animationDelay: `${idx * 40}ms` }}>
+                    <tr key={u._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors animate-fade-in" style={{ animationDelay: `${idx * 40}ms` }}>
                       <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg shadow-sm">
+                        <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-lg shadow-sm">
                           {u.fullName ? u.fullName.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : u.username[0].toUpperCase()}
                         </div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">{u.username}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">{u.fullName}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">{u.email}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{u.username}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{u.fullName}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{u.email}</td>
                       <td className="px-4 py-2 whitespace-nowrap capitalize">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : u.role === 'security' ? 'bg-green-100 text-green-700' : u.role === 'gate' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{u.role.replace('_', ' ')}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' : u.role === 'security' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : u.role === 'gate' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>{u.role.replace('_', ' ')}</span>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">{u.department || "-"}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{u.department || "-"}</td>
                       <td className="px-4 py-2 whitespace-nowrap">
-                        {u.isActive ? <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Active</span> : <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Inactive</span>}
+                        {u.isActive ? <span className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-2 py-1 rounded text-xs font-semibold">Active</span> : <span className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 px-2 py-1 rounded text-xs font-semibold">Inactive</span>}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap flex gap-2">
-                        <button className="text-blue-600 hover:text-blue-900 transition-transform hover:scale-110" onClick={() => openEdit(u)} title="Edit">
+                        <button className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-200 transition-transform hover:scale-110" onClick={() => openEdit(u)} title="Edit">
                           <FaUserEdit />
                         </button>
-                        <button className="text-red-600 hover:text-red-900 transition-transform hover:scale-110" onClick={() => handleDelete(u._id)} title="Delete">
+                        <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 transition-transform hover:scale-110" onClick={() => handleDelete(u._id)} title="Delete">
                           <FaTrashAlt />
                         </button>
                       </td>
@@ -155,38 +155,38 @@ const UserManagement: React.FC = () => {
       {/* Create/Edit Modal */}
       {(showCreate || showEdit) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 animate-fade-in">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative animate-scale-in">
-            <button onClick={closeModals} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">{showCreate ? <FaUserPlus /> : <FaUserEdit />} {showCreate ? "Add User" : "Edit User"}</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-md relative animate-scale-in">
+            <button onClick={closeModals} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-100">{showCreate ? <FaUserPlus /> : <FaUserEdit />} {showCreate ? "Add User" : "Edit User"}</h2>
             <form onSubmit={showCreate ? handleCreate : handleEdit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
-                <input name="username" value={form.username} onChange={handleChange} required className="input-field mt-1" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                <input name="username" value={form.username} onChange={handleChange} required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input name="fullName" value={form.fullName} onChange={handleChange} required className="input-field mt-1" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                <input name="fullName" value={form.fullName} onChange={handleChange} required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input name="email" type="email" value={form.email} onChange={handleChange} required className="input-field mt-1" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input name="email" type="email" value={form.email} onChange={handleChange} required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />
               </div>
               {showCreate && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
-                  <input name="password" type="password" value={form.password} onChange={handleChange} required className="input-field mt-1" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                  <input name="password" type="password" value={form.password} onChange={handleChange} required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
-                <select name="role" value={form.role} onChange={handleChange} className="input-field mt-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+                <select name="role" value={form.role} onChange={handleChange} className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700">
                   {roles.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
               {form.role === "department_user" && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Department</label>
-                  <select name="department" value={form.department} onChange={handleChange} className="input-field mt-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Department</label>
+                  <select name="department" value={form.department} onChange={handleChange} className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700">
                     <option value="">Select</option>
                     {departments.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>

@@ -51,12 +51,12 @@ const SecurityReview: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6 animate-fade-in">
-      <div className="card">
-        <div className="card-header flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Visitor Requests (Security Review)</h2>
-          <div className="flex gap-2">
-            <label className="font-medium">Filter by status:</label>
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-field">
+      <div className="card bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
+        <div className="card-header flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Visitor Requests (Security Review)</h2>
+          <div className="flex gap-2 items-center">
+            <label className="font-medium text-gray-700 dark:text-gray-300">Filter by status:</label>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700">
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="declined">Declined</option>
@@ -71,35 +71,33 @@ const SecurityReview: React.FC = () => {
           ) : error ? (
             <div className="text-red-600 text-center py-4">{error}</div>
           ) : filteredRequests.length === 0 ? (
-            <div className="text-gray-500 py-4 text-center">No requests found.</div>
+            <div className="text-gray-500 dark:text-gray-300 py-4 text-center">No requests found.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Visitor</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Purpose</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredRequests.map(r => (
-                    <tr key={r._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-2 whitespace-nowrap">{r.visitorName}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">{r.purpose}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">{r.scheduledDate?.slice(0, 10)}</td>
+                    <tr key={r._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{r.visitorName}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{r.purpose}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{r.scheduledDate?.slice(0, 10)}</td>
                       <td className="px-4 py-2 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[r.status] || "bg-gray-100 text-gray-800"}`}>
-                          {r.status.replace("_", " ")}
-                        </span>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[r.status] || "bg-gray-100 text-gray-800"}`}>{r.status.replace("_", " ")}</span>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap flex flex-col gap-2">
+                      <td className="px-4 py-2 whitespace-nowrap flex flex-col gap-2 min-w-[180px]">
                         {r.status === "pending" && (
                           <>
                             <textarea
-                              className="input-field mb-2 w-full"
+                              className="input-field mb-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700"
                               placeholder="Review comments (optional)"
                               value={reviewingId === r._id ? reviewComments : ""}
                               onChange={e => setReviewComments(e.target.value)}

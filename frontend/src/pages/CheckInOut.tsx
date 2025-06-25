@@ -54,9 +54,9 @@ const CheckInOut: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6 animate-fade-in">
-      <div className="card">
+      <div className="card bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
         <div className="card-header">
-          <h2 className="text-2xl font-bold mb-4">Visitor Check In/Out</h2>
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Visitor Check In/Out</h2>
         </div>
         <div className="card-body">
           {loading ? (
@@ -69,26 +69,26 @@ const CheckInOut: React.FC = () => {
             <div className="text-gray-500 py-4 text-center">No visitors to check in/out.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">National ID</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Photo</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visitor</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Purpose</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">National ID</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Photo</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {visitors.map(v => (
-                    <tr key={v._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-2 whitespace-nowrap">{v.visitorName}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">{v.purpose}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">{v.nationalId}</td>
+                    <tr key={v._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{v.visitorName}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{v.purpose}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{v.nationalId}</td>
                       <td className="px-4 py-2 whitespace-nowrap">
                         {v.photo ? (
-                          <button onClick={() => setPhotoPreview(v.photo.startsWith("/uploads") ? v.photo : `/uploads/${v.photo}`)} className="focus:outline-none">
+                          <button onClick={() => v.photo ? setPhotoPreview(v.photo.startsWith("/uploads") ? v.photo : `/uploads/${v.photo}`) : undefined} className="focus:outline-none">
                             <img src={v.photo.startsWith("/uploads") ? v.photo : `/uploads/${v.photo}`} alt="Visitor" className="h-12 w-12 object-cover rounded-full border hover:scale-110 transition-transform" />
                           </button>
                         ) : (
@@ -97,10 +97,10 @@ const CheckInOut: React.FC = () => {
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap capitalize">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          v.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                          v.status === 'checked_in' ? 'bg-green-100 text-green-800' :
-                          v.status === 'checked_out' ? 'bg-gray-100 text-gray-800' :
-                          'bg-gray-100 text-gray-800'
+                          v.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                          v.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                          v.status === 'checked_out' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
                         }`}>
                           {v.status.replace("_", " ")}
                         </span>
@@ -112,7 +112,7 @@ const CheckInOut: React.FC = () => {
                             disabled={processingId === v._id}
                             onClick={() => handleCheckIn(v._id)}
                           >
-                            Check In
+                            {processingId === v._id ? 'Checking In...' : 'Check In'}
                           </button>
                         )}
                         {v.status === "checked_in" && (
@@ -121,7 +121,7 @@ const CheckInOut: React.FC = () => {
                             disabled={processingId === v._id}
                             onClick={() => handleCheckOut(v._id)}
                           >
-                            Check Out
+                            {processingId === v._id ? 'Checking Out...' : 'Check Out'}
                           </button>
                         )}
                       </td>
@@ -135,8 +135,8 @@ const CheckInOut: React.FC = () => {
       </div>
       {photoPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={() => setPhotoPreview(null)}>
-          <div className="bg-white rounded-lg shadow-lg p-4 relative" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setPhotoPreview(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPhotoPreview(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
             <img src={photoPreview} alt="Visitor Preview" className="max-w-xs max-h-[70vh] rounded-lg border" />
           </div>
         </div>

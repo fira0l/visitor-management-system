@@ -51,32 +51,32 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
             <UserGroupIcon className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-gray-100">
             {process.env.REACT_APP_APP_NAME || "INSA Visitor Management"}
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             Sign in to your account or{" "}
-            <a href="/signup" className="text-blue-600 hover:underline">
+            <a href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline">
               Sign up
             </a>
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-8 animate-fade-in">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 animate-fade-in">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
-              <input id="username" name="username" type="text" autoComplete="username" required className="input-field mt-1" placeholder="Enter your username" value={username} onChange={e => setUsername(e.target.value)} disabled={loading} />
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+              <input id="username" name="username" type="text" autoComplete="username" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" placeholder="Enter your username" value={username} onChange={e => setUsername(e.target.value)} disabled={loading} />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
               <div className="mt-1 relative">
-                <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required className="input-field pr-10" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} />
+                <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required className="input-field pr-10 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} />
                 <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? (
                     <EyeSlashIcon className="h-5 w-5 text-gray-400" />
@@ -91,14 +91,14 @@ const Login: React.FC = () => {
             </button>
           </form>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 animate-fade-in">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Demo Credentials</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 animate-fade-in">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Demo Credentials</h3>
           <ul className="space-y-2">
             {demoCredentials.map((cred, idx) => (
-              <li key={cred.role} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
-                <span className="font-medium text-gray-700">{cred.role}</span>
-                <span className="text-xs text-gray-500">{cred.username} / {cred.password}</span>
-                <button className="ml-2 text-blue-600 hover:underline text-xs" onClick={() => fillDemoCredentials(cred.username, cred.password)}>
+              <li key={cred.role} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded px-3 py-2">
+                <span className="font-medium text-gray-700 dark:text-gray-300">{cred.role}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{cred.username} / {cred.password}</span>
+                <button className="ml-2 text-blue-600 dark:text-blue-400 hover:underline text-xs" onClick={() => fillDemoCredentials(cred.username, cred.password)}>
                   Autofill
                 </button>
               </li>

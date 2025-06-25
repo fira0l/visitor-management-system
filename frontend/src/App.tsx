@@ -1,3 +1,4 @@
+import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { AuthProvider } from "./contexts/AuthContext.tsx"
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx"
@@ -23,10 +24,8 @@ function App() {
             position="top-right"
             toastOptions={{
               duration: 4000,
-              style: {
-                background: "#363636",
-                color: "#fff",
-              },
+              className: "bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 shadow-lg rounded-lg px-4 py-3 border border-gray-200 dark:border-gray-700 transition-colors",
+              style: {},
               success: {
                 duration: 3000,
                 iconTheme: {

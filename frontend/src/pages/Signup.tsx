@@ -40,32 +40,32 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Sign up for an account</h2>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-gray-100">Sign up for an account</h2>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-8 animate-fade-in">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 animate-fade-in">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input id="fullName" name="fullName" type="text" required className="input-field mt-1" value={fullName} onChange={e => setFullName(e.target.value)} disabled={loading} />
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+              <input id="fullName" name="fullName" type="text" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={fullName} onChange={e => setFullName(e.target.value)} disabled={loading} />
             </div>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
-              <input id="username" name="username" type="text" required className="input-field mt-1" value={username} onChange={e => setUsername(e.target.value)} disabled={loading} />
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+              <input id="username" name="username" type="text" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={username} onChange={e => setUsername(e.target.value)} disabled={loading} />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-              <input id="email" name="email" type="email" required className="input-field mt-1" value={email} onChange={e => setEmail(e.target.value)} disabled={loading} />
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+              <input id="email" name="email" type="email" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={email} onChange={e => setEmail(e.target.value)} disabled={loading} />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-              <input id="password" name="password" type="password" required className="input-field mt-1" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} />
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+              <input id="password" name="password" type="password" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} />
             </div>
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-              <select id="role" name="role" required className="input-field mt-1" value={role} onChange={e => setRole(e.target.value as RegisterPayload["role"])} disabled={loading}>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+              <select id="role" name="role" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={role} onChange={e => setRole(e.target.value as RegisterPayload["role"])} disabled={loading}>
                 <option value="">Select a role</option>
                 <option value="department_user">Department User</option>
                 <option value="security">Security</option>
@@ -74,8 +74,8 @@ const Signup: React.FC = () => {
             </div>
             {role === "department_user" && (
               <div>
-                <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
-                <input id="department" name="department" type="text" required className="input-field mt-1" value={department} onChange={e => setDepartment(e.target.value)} disabled={loading} />
+                <label htmlFor="department" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Department</label>
+                <input id="department" name="department" type="text" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={department} onChange={e => setDepartment(e.target.value)} disabled={loading} />
               </div>
             )}
             <button type="submit" className="btn-primary w-full" disabled={loading}>

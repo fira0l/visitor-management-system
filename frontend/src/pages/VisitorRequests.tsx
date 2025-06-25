@@ -65,10 +65,10 @@ const VisitorRequests: React.FC = () => {
     <div className="max-w-5xl mx-auto p-6 animate-fade-in">
       {/* Department User status chart */}
       {user?.role === "department_user" && (
-        <div className="card mb-8 animate-fade-in">
+        <div className="card mb-8 animate-fade-in bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
           <div className="card-header flex items-center gap-2">
             <FaChartBar className="text-indigo-500" />
-            <h3 className="text-lg font-semibold mb-4">My Request Status Overview (Real-time)</h3>
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">My Request Status Overview (Real-time)</h3>
           </div>
           <div className="card-body">
             <ResponsiveContainer width="100%" height={220}>
@@ -79,19 +79,19 @@ const VisitorRequests: React.FC = () => {
                 { status: "Checked In", value: myStatusStats.checkedIn },
                 { status: "Checked Out", value: myStatusStats.checkedOut },
               ]} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="status" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'} />
+                <XAxis dataKey="status" stroke={document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'} />
+                <YAxis allowDecimals={false} stroke={document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'} />
+                <Tooltip contentStyle={{ background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#fff', color: document.documentElement.classList.contains('dark') ? '#fff' : '#111' }} />
                 <Bar dataKey="value" fill="#6366f1" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       )}
-      <div className="card">
+      <div className="card bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
         <div className="card-header flex items-center justify-between">
-          <h2 className="text-2xl font-bold">My Visitor Requests</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Visitor Requests</h2>
         </div>
         <div className="card-body">
           {loading ? (
@@ -104,24 +104,31 @@ const VisitorRequests: React.FC = () => {
             <div className="text-gray-500 py-4 text-center">No requests found.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visitor</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Purpose</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {myRequests.map(r => (
-                    <tr key={r._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-2 whitespace-nowrap">{r.visitorName}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">{r.purpose}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">{r.scheduledDate?.slice(0, 10)}</td>
+                    <tr key={r._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{r.visitorName}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{r.purpose}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{r.scheduledDate?.slice(0, 10)}</td>
                       <td className="px-4 py-2 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[r.status] || "bg-gray-100 text-gray-800"}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          r.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          r.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                          r.status === 'declined' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                          r.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                          r.status === 'checked_out' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                        }`}>
                           {r.status.replace("_", " ")}
                         </span>
                       </td>

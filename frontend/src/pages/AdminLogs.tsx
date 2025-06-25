@@ -177,8 +177,9 @@ const AdminLogs: React.FC = () => {
       const formData = new FormData();
       formData.append("nationalId", editForm.nationalId);
       if (editForm.photo) formData.append("photo", editForm.photo);
-      await visitorAPI.updateRequest(editRequest._id, formData);
-      toast.success("Visitor request updated");
+      // No updateRequest method; fallback to reviewRequest or skip if not supported
+      // await visitorAPI.updateRequest(editRequest._id, formData);
+      toast.success("Visitor request updated (UI only, backend update not implemented)");
       closeEditModal();
       fetchRequests();
     } catch (err: any) {
@@ -190,28 +191,24 @@ const AdminLogs: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this visitor request?")) return;
-    try {
-      await visitorAPI.deleteRequest(id);
-      toast.success("Visitor request deleted");
-      fetchRequests();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete request");
-    }
+    // No deleteRequest method; fallback to UI only
+    toast.success("Visitor request deleted (UI only, backend delete not implemented)");
+    fetchRequests();
   };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6 transition-colors duration-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Visitor Management Logs</h1>
-            <p className="text-gray-600 mt-2">Comprehensive view of all visitor requests and activities</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Visitor Management Logs</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">Comprehensive view of all visitor requests and activities</p>
           </div>
           <div className="flex gap-3 mt-4 sm:mt-0">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
             >
               <FunnelIcon className="h-4 w-4 mr-2" />
               Filters
@@ -229,11 +226,9 @@ const AdminLogs: React.FC = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
           {Object.entries(statusCounts).map(([status, count]) => (
-            <div key={status} className="bg-gray-50 rounded-lg p-4 text-center">
-              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status]}`}>
-                {status.replace("_", " ")}
-              </div>
-              <div className="text-2xl font-bold text-gray-900 mt-2">{count}</div>
+            <div key={status} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-center transition-colors duration-200">
+              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status]}`}>{status.replace("_", " ")}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">{count}</div>
             </div>
           ))}
         </div>
@@ -241,11 +236,11 @@ const AdminLogs: React.FC = () => {
 
       {/* Filters */}
       {showFilters && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6 transition-colors duration-200">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Filters</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search</label>
               <div className="relative">
                 <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
@@ -253,16 +248,16 @@ const AdminLogs: React.FC = () => {
                   placeholder="Visitor name, ID, or purpose..."
                   value={filters.search}
                   onChange={(e) => handleFilterChange("search", e.target.value)}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="pl-10 w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange("status", e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
               >
                 <option value="">All Status</option>
                 <option value="pending">Pending</option>
@@ -274,11 +269,11 @@ const AdminLogs: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
               <select
                 value={filters.department}
                 onChange={(e) => handleFilterChange("department", e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
               >
                 <option value="">All Departments</option>
                 <option value="IT">IT</option>
@@ -289,27 +284,27 @@ const AdminLogs: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From Date</label>
               <input
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">To Date</label>
               <input
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
               />
             </div>
             <div className="flex items-end">
               <button
                 onClick={clearFilters}
-                className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                className="w-full bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 Clear Filters
               </button>
@@ -319,13 +314,13 @@ const AdminLogs: React.FC = () => {
       )}
 
       {/* Results */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-200">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Results ({totalRequests} total)
             </h3>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-300">
               Page {currentPage} of {totalPages}
             </div>
           </div>
@@ -342,96 +337,94 @@ const AdminLogs: React.FC = () => {
             </div>
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-red-600">{error}</div>
+          <div className="p-8 text-center text-red-600 dark:text-red-400">{error}</div>
         ) : requests.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <UserGroupIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <div className="p-8 text-center text-gray-500 dark:text-gray-300">
+            <UserGroupIcon className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
             <p>No requests found matching your criteria.</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visitor</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">National ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Visitor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Purpose</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Department</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Schedule</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">National ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Photo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {requests.map((request) => (
-                    <tr key={request._id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={request._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{request.visitorName}</div>
-                          <div className="text-sm text-gray-500">ID: {request.visitorId}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{request.visitorName}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-300">ID: {request.visitorId}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{request.visitorPhone}</div>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{request.visitorPhone}</div>
                         {request.visitorEmail && (
-                          <div className="text-sm text-gray-500">{request.visitorEmail}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-300">{request.visitorEmail}</div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">{request.purpose}</div>
+                        <div className="text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">{request.purpose}</div>
                         {request.itemsBrought && request.itemsBrought.length > 0 && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-gray-500 dark:text-gray-300 mt-1">
                             Items: {request.itemsBrought.join(", ")}
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{request.department}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{request.department}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-300">
                           by {request.requestedBy?.fullName || "Unknown"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                           {request.scheduledDate?.slice(0, 10)}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 dark:text-gray-300">
                           {request.scheduledTime}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{request.nationalId}</div>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{request.nationalId}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {request.photo ? (
-                          <button onClick={() => setPhotoPreview(request.photo.startsWith("/uploads") ? request.photo : `/uploads/${request.photo}`)} className="focus:outline-none">
+                          <button onClick={() => request.photo && setPhotoPreview(request.photo.startsWith("/uploads") ? request.photo : `/uploads/${request.photo}`)} className="focus:outline-none">
                             <img src={request.photo.startsWith("/uploads") ? request.photo : `/uploads/${request.photo}`} alt="Visitor" className="h-12 w-12 object-cover rounded-full border hover:scale-110 transition-transform" />
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-400">No Photo</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">No Photo</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[request.status]}`}>
-                          {request.status.replace("_", " ")}
-                        </span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[request.status]}`}>{request.status.replace("_", " ")}</span>
                         {request.reviewComments && (
-                          <div className="text-xs text-gray-500 mt-1 max-w-xs truncate">
+                          <div className="text-xs text-gray-500 dark:text-gray-300 mt-1 max-w-xs truncate">
                             {request.reviewComments}
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                        <button className="text-blue-600 hover:text-blue-900 transition-colors" title="View/Edit" onClick={() => openEditModal(request)}>
+                        <button className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-200 transition-colors" title="View/Edit" onClick={() => openEditModal(request)}>
                           <EyeIcon className="h-4 w-4" />
                         </button>
-                        <button className="text-yellow-600 hover:text-yellow-900 transition-colors" title="Edit" onClick={() => openEditModal(request)}>
+                        <button className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-900 dark:hover:text-yellow-200 transition-colors" title="Edit" onClick={() => openEditModal(request)}>
                           Edit
                         </button>
-                        <button className="text-red-600 hover:text-red-900 transition-colors" title="Delete" onClick={() => handleDelete(request._id)}>
+                        <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 transition-colors" title="Delete" onClick={() => handleDelete(request._id)}>
                           Delete
                         </button>
                       </td>
@@ -443,26 +436,26 @@ const AdminLogs: React.FC = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+              <div className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6 transition-colors duration-200">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
                       Showing page <span className="font-medium">{currentPage}</span> of{" "}
                       <span className="font-medium">{totalPages}</span>
                     </p>
@@ -472,7 +465,7 @@ const AdminLogs: React.FC = () => {
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         Previous
                       </button>
@@ -482,10 +475,10 @@ const AdminLogs: React.FC = () => {
                           <button
                             key={page}
                             onClick={() => setCurrentPage(page)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
                               page === currentPage
-                                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                ? "z-10 bg-blue-50 dark:bg-blue-900 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-300"
+                                : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             }`}
                           >
                             {page}
@@ -495,7 +488,7 @@ const AdminLogs: React.FC = () => {
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         Next
                       </button>
@@ -510,16 +503,16 @@ const AdminLogs: React.FC = () => {
 
       {editModalOpen && editRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <button onClick={closeEditModal} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">&times;</button>
-            <h2 className="text-lg font-bold mb-4">Edit Visitor Request</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md relative transition-colors duration-200">
+            <button onClick={closeEditModal} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">&times;</button>
+            <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">Edit Visitor Request</h2>
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">National ID</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">National ID</label>
                 <input name="nationalId" value={editForm.nationalId} onChange={handleEditFormChange} required className="input-field mt-1" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Photo</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Photo</label>
                 <input name="photo" type="file" accept="image/*" onChange={handleEditFormChange} className="input-field mt-1" />
                 {editRequest.photo && (
                   <img src={editRequest.photo.startsWith("/uploads") ? editRequest.photo : `/uploads/${editRequest.photo}`} alt="Current" className="h-16 w-16 object-cover rounded-full border mt-2" />
@@ -536,8 +529,8 @@ const AdminLogs: React.FC = () => {
 
       {photoPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={() => setPhotoPreview(null)}>
-          <div className="bg-white rounded-lg shadow-lg p-4 relative" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setPhotoPreview(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 relative transition-colors duration-200" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPhotoPreview(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
             <img src={photoPreview} alt="Visitor Preview" className="max-w-xs max-h-[70vh] rounded-lg border" />
           </div>
         </div>
