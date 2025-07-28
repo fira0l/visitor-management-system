@@ -11,10 +11,50 @@ const createRequest = async (req, res, next) => {
       photoPath = `/uploads/${req.file.filename}`;
     }
 
-    // Ensure nationalId is present
-    const { nationalId, ...rest } = req.body;
+    // Ensure nationalId, location, and departmentType are present
+    const { nationalId, location, departmentType, gateAssignment, accessType, isGroupVisit, companyName, groupSize, originDepartment, ...rest } = req.body;
     if (!nationalId) {
       return res.status(400).json({ success: false, message: "National ID is required" });
+    }
+    if (!location || !['Wollo Sefer', 'Operation'].includes(location)) {
+      return res.status(400).json({ success: false, message: "Location is required and must be either Wollo Sefer or Operation" });
+    }
+    if (!departmentType || !['wing', 'director', 'division'].includes(departmentType)) {
+      return res.status(400).json({ success: false, message: "Department type is required and must be either wing, director, or division" });
+    }
+    if (departmentType === 'wing' && (!gateAssignment || !['Gate 1', 'Gate 2', 'Gate 3'].includes(gateAssignment))) {
+      return res.status(400).json({ success: false, message: "Gate assignment is required for wing department type and must be Gate 1, Gate 2, or Gate 3" });
+    }
+    if (departmentType === 'wing' && (!accessType || !['VIP', 'Guest'].includes(accessType))) {
+      return res.status(400).json({ success: false, message: "Access type is required for wing department type and must be VIP or Guest" });
+    }
+    if (isGroupVisit === 'true' && (!companyName || !groupSize)) {
+      return res.status(400).json({ success: false, message: "Company name and group size are required for group visits" });
+    }
+
+    // Enforce departmentRole-based VIP permission restrictions
+    if (req.user.role === 'department_user' && accessType === 'VIP') {
+      const userRole = req.user.departmentRole;
+      if (userRole === 'division_head') {
+        if (gateAssignment !== 'Gate 1') {
+          // Check for active delegation granting VIP and gate access
+          const Delegation = require('../models/Delegation');
+          const activeDelegation = await Delegation.findOne({
+            requestedTo: req.user._id,
+            status: 'active',
+            isActive: true,
+            'permissions.gateAccess': gateAssignment,
+            'permissions.accessType': 'VIP',
+          });
+          if (!activeDelegation) {
+            return res.status(403).json({ success: false, message: "Division Head can only request VIP for Gate 1 unless delegated by Wing/Director." });
+          }
+        }
+      } else if (userRole === 'wing' || userRole === 'director') {
+        // Can request VIP for any gate
+      } else {
+        return res.status(403).json({ success: false, message: "You do not have permission to request VIP access." });
+      }
     }
 
     const visitorRequest = await VisitorRequest.create({
@@ -23,6 +63,14 @@ const createRequest = async (req, res, next) => {
       photo: photoPath,
       requestedBy: req.user._id,
       department: req.user.department,
+      location,
+      departmentType,
+      gateAssignment,
+      accessType,
+      isGroupVisit: isGroupVisit === 'true',
+      companyName,
+      groupSize: groupSize ? parseInt(groupSize) : undefined,
+      originDepartment,
     })
 
     await visitorRequest.populate("requestedBy", "fullName username")
@@ -40,7 +88,7 @@ const createRequest = async (req, res, next) => {
 const getRequests = async (req, res, next) => {
   try {
     const query = {}
-    const { status, department, date, page = 1, limit = 10, search } = req.query
+    const { status, department, date, page = 1, limit = 10, search, location, gateAssignment, isGroupVisit, startDate, endDate, visitType } = req.query
 
     // Role-based filtering
     switch (req.user.role) {
@@ -67,13 +115,27 @@ const getRequests = async (req, res, next) => {
       endDate.setDate(endDate.getDate() + 1)
       query.scheduledDate = { $gte: startDate, $lt: endDate }
     }
+    if (startDate && endDate) {
+      query.scheduledDate = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      }
+    }
     if (search) {
       query.$or = [
         { visitorName: new RegExp(search, "i") },
         { visitorId: new RegExp(search, "i") },
         { approvalCode: new RegExp(search, "i") },
+        { companyName: new RegExp(search, "i") },
+        { originDepartment: new RegExp(search, "i") },
       ]
     }
+    if (location && ['Wollo Sefer', 'Operation'].includes(location)) query.location = location
+    if (gateAssignment && ['Gate 1', 'Gate 2', 'Gate 3'].includes(gateAssignment)) query.gateAssignment = gateAssignment
+    if (isGroupVisit === 'true') query.isGroupVisit = true
+    if (isGroupVisit === 'false') query.isGroupVisit = false
+    if (visitType === 'group') query.isGroupVisit = true
+    if (visitType === 'individual') query.isGroupVisit = false
 
     const requests = await VisitorRequest.find(query)
       .populate("requestedBy", "fullName username department")
@@ -90,6 +152,41 @@ const getRequests = async (req, res, next) => {
       totalPages: Math.ceil(total / limit),
       currentPage: page,
       total,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getRequest = async (req, res, next) => {
+  try {
+    const request = await VisitorRequest.findById(req.params.id)
+      .populate("requestedBy", "fullName username department")
+      .populate("reviewedBy", "fullName username")
+
+    if (!request) {
+      return next(new AppError("Request not found", 404))
+    }
+
+    // Role-based access control
+    switch (req.user.role) {
+      case "department_user":
+        if (request.requestedBy._id.toString() !== req.user._id.toString()) {
+          return next(new AppError("Not authorized to view this request", 403))
+        }
+        break
+      case "security":
+      case "gate":
+      case "admin":
+        // These roles can view all requests
+        break
+      default:
+        return next(new AppError("Not authorized", 403))
+    }
+
+    res.json({
+      success: true,
+      request,
     })
   } catch (error) {
     next(error)
@@ -160,6 +257,7 @@ const checkIn = async (req, res, next) => {
       checkInBy: req.user._id,
       actualItemsBrought,
       checkInNotes: notes,
+      location: request.location,
     })
 
     // Update request status
@@ -223,7 +321,7 @@ const checkOut = async (req, res, next) => {
 
 const getAnalytics = async (req, res, next) => {
   try {
-    const { startDate, endDate, department } = req.query
+    const { startDate, endDate, department, location, gateAssignment } = req.query
 
     const matchQuery = {}
     if (startDate && endDate) {
@@ -234,6 +332,12 @@ const getAnalytics = async (req, res, next) => {
     }
     if (department) {
       matchQuery.department = department
+    }
+    if (location && ['Wollo Sefer', 'Operation'].includes(location)) {
+      matchQuery.location = location
+    }
+    if (gateAssignment && ['Gate 1', 'Gate 2', 'Gate 3'].includes(gateAssignment)) {
+      matchQuery.gateAssignment = gateAssignment
     }
 
     const analytics = await VisitorRequest.aggregate([
@@ -342,13 +446,153 @@ const deleteRequest = async (req, res, next) => {
   }
 };
 
+// Get visitor history for reuse functionality
+const getVisitorHistory = async (req, res, next) => {
+  try {
+    const { visitorId, nationalId, visitorName } = req.query
+    
+    if (!visitorId && !nationalId && !visitorName) {
+      return next(new AppError("Please provide visitorId, nationalId, or visitorName", 400))
+    }
+
+    const query = {}
+    if (visitorId) query.visitorId = new RegExp(visitorId, "i")
+    if (nationalId) query.nationalId = new RegExp(nationalId, "i")
+    if (visitorName) query.visitorName = new RegExp(visitorName, "i")
+
+    // Role-based filtering
+    switch (req.user.role) {
+      case "department_user":
+        query.requestedBy = req.user._id
+        break
+      case "admin":
+        // Admin can see all
+        break
+      default:
+        return next(new AppError("Not authorized to view visitor history", 403))
+    }
+
+    const history = await VisitorRequest.find(query)
+      .populate("requestedBy", "fullName username department")
+      .populate("reviewedBy", "fullName username")
+      .sort({ createdAt: -1 })
+      .limit(20)
+
+    res.json({
+      success: true,
+      history,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+// Reuse visitor request data
+const reuseVisitorData = async (req, res, next) => {
+  try {
+    const { originalRequestId } = req.params
+    const { scheduledDate, scheduledTime, purpose, itemsBrought } = req.body
+
+    const originalRequest = await VisitorRequest.findById(originalRequestId)
+    if (!originalRequest) {
+      return next(new AppError("Original request not found", 404))
+    }
+
+    // Check if user can access this request
+    if (originalRequest.requestedBy.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+      return next(new AppError("Not authorized to reuse this request", 403))
+    }
+
+    // Determine department, departmentType, and location for new request
+    let department = req.user.department;
+    let departmentType = req.user.departmentType;
+    let location = req.user.location;
+
+    // For department users, fallback to originalRequest if missing or empty
+    if (req.user.role === 'department_user') {
+      if (!department || department.trim() === '') {
+        department = originalRequest.department;
+      }
+      if (!departmentType || departmentType.trim() === '') {
+        departmentType = originalRequest.departmentType;
+      }
+      if (!location || location.trim() === '') {
+        location = originalRequest.location;
+      }
+    } else {
+      // For other roles, fallback as before
+      department = (department && department.trim()) ? department : originalRequest.department;
+      departmentType = (departmentType && departmentType.trim()) ? departmentType : originalRequest.departmentType;
+      location = (location && location.trim()) ? location : originalRequest.location;
+    }
+
+    // Validate required fields
+    if (!department || department.trim() === '') {
+      return next(new AppError("Department is required for reuse", 400));
+    }
+    if (!departmentType || departmentType.trim() === '') {
+      return next(new AppError("Department type is required for reuse", 400));
+    }
+    if (!location || location.trim() === '') {
+      return next(new AppError("Location is required for reuse", 400));
+    }
+
+    // Ensure scheduledDate is not in the past
+    let newScheduledDate = scheduledDate || new Date().toISOString().slice(0, 10);
+    const today = new Date();
+    const inputDate = new Date(newScheduledDate);
+    if (inputDate < new Date(today.setHours(0,0,0,0))) {
+      return next(new AppError("Scheduled date cannot be in the past", 400));
+    }
+
+    // Create new request with reused data
+    const newRequest = await VisitorRequest.create({
+      visitorName: originalRequest.visitorName,
+      visitorId: originalRequest.visitorId,
+      nationalId: originalRequest.nationalId,
+      visitorPhone: originalRequest.visitorPhone,
+      visitorEmail: originalRequest.visitorEmail,
+      purpose: purpose || originalRequest.purpose,
+      itemsBrought: itemsBrought ? itemsBrought.split(',').map(item => item.trim()) : originalRequest.itemsBrought,
+      department,
+      departmentType,
+      location,
+      gateAssignment: originalRequest.gateAssignment,
+      accessType: originalRequest.accessType,
+      isGroupVisit: originalRequest.isGroupVisit,
+      companyName: originalRequest.companyName,
+      groupSize: originalRequest.groupSize,
+      originDepartment: originalRequest.originDepartment,
+      scheduledDate: newScheduledDate,
+      scheduledTime: scheduledTime || "09:00",
+      requestedBy: req.user._id,
+      visitDuration: { hours: 1, days: 0 },
+      priority: "medium",
+      status: "pending",
+    })
+
+    await newRequest.populate("requestedBy", "fullName username")
+
+    res.status(201).json({
+      success: true,
+      message: "Visitor request created from history",
+      request: newRequest,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   createRequest,
   getRequests,
+  getRequest,
   reviewRequest,
   checkIn,
   checkOut,
   getAnalytics,
   updateRequest,
   deleteRequest,
+  getVisitorHistory,
+  reuseVisitorData,
 }

@@ -6,12 +6,15 @@ const { validateVisitorRequest } = require("../middleware/validation")
 const {
   createRequest,
   getRequests,
+  getRequest,
   reviewRequest,
   checkIn,
   checkOut,
   getAnalytics,
   updateRequest,
   deleteRequest,
+  getVisitorHistory,
+  reuseVisitorData,
 } = require("../controllers/visitorController")
 const multer = require("multer")
 const path = require("path")
@@ -44,6 +47,11 @@ router.post(
 
 // Common routes (role-based filtering in controller)
 router.get("/requests", getRequests)
+router.get("/requests/:id", getRequest)
+
+// New routes for history and reuse
+router.get("/history", getVisitorHistory)
+router.post("/requests/:originalRequestId/reuse", reuseVisitorData)
 
 // Security team routes
 router.patch("/requests/:id/review", authorize("security"), reviewRequest)

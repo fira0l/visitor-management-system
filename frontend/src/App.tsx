@@ -14,6 +14,7 @@ import { Toaster } from "react-hot-toast"
 import SecurityReview from "./pages/SecurityReview.tsx"
 import AdminLogs from "./pages/AdminLogs.tsx"
 import UserManagement from "./pages/UserManagement.tsx"
+import VisitorHistory from "./pages/VisitorHistory.tsx"
 
 function App() {
   return (
@@ -101,6 +102,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin"]}>
                     <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="visitor-history"
+                element={
+                  <ProtectedRoute allowedRoles={["department_user", "admin"]}>
+                    <VisitorHistory />
                   </ProtectedRoute>
                 }
               />

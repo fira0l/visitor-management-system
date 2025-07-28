@@ -13,6 +13,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   ClipboardDocumentListIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline"
 import { useState, useEffect } from "react"
 
@@ -53,7 +54,11 @@ const Layout: React.FC = () => {
 
     switch (user?.role) {
       case "department_user":
-        return [...baseItems, { name: "Create Request", href: "/create-request", icon: PlusIcon }]
+        return [
+          ...baseItems, 
+          { name: "Create Request", href: "/create-request", icon: PlusIcon },
+          { name: "Visitor History", href: "/visitor-history", icon: ClockIcon }
+        ]
       case "security":
         return [...baseItems, { name: "Security Review", href: "/security-review", icon: DocumentTextIcon }]
       case "gate":
@@ -65,7 +70,8 @@ const Layout: React.FC = () => {
           { name: "Admin Logs", href: "/admin-logs", icon: ClipboardDocumentListIcon },
           { name: "Security Review", href: "/security-review", icon: DocumentTextIcon },
           { name: "Check In/Out", href: "/checkin-checkout", icon: UserGroupIcon },
-          { name: "Analytics", href: "/analytics", icon: ChartBarIcon }
+          { name: "Analytics", href: "/analytics", icon: ChartBarIcon },
+          { name: "Visitor History", href: "/visitor-history", icon: ClockIcon }
         ]
       default:
         return baseItems

@@ -13,6 +13,9 @@ dotenv.config()
 const authRoutes = require("./routes/auth")
 const visitorRoutes = require("./routes/visitors")
 const userRoutes = require("./routes/users")
+const bulkUploadRoutes = require("./routes/bulkUpload")
+const delegationRoutes = require("./routes/delegations")
+const auditLogRoutes = require("./routes/auditLogs")
 
 // Import middleware
 const { errorHandler } = require("./middleware/errorHandler")
@@ -52,6 +55,9 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 app.use("/api/auth", authRoutes)
 app.use("/api/visitors", visitorRoutes)
 app.use("/api/users", userRoutes)
+app.use("/api/bulk-upload", bulkUploadRoutes)
+app.use("/api/delegations", delegationRoutes)
+app.use("/api/audit-logs", auditLogRoutes)
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

@@ -52,6 +52,56 @@ const visitorRequestSchema = new mongoose.Schema(
       required: [true, "Department is required"],
       trim: true,
     },
+    departmentType: {
+      type: String,
+      enum: ['wing', 'director', 'division'],
+      required: [true, 'Department type is required'],
+      trim: true,
+    },
+    gateAssignment: {
+      type: String,
+      enum: ['Gate 1', 'Gate 2', 'Gate 3'],
+      required: function () {
+        return this.departmentType === 'wing'
+      },
+      trim: true,
+    },
+    accessType: {
+      type: String,
+      enum: ['VIP', 'Guest'],
+      required: function () {
+        return this.departmentType === 'wing'
+      },
+      trim: true,
+    },
+    isGroupVisit: {
+      type: Boolean,
+      default: false,
+    },
+    companyName: {
+      type: String,
+      trim: true,
+      maxlength: [100, "Company name cannot exceed 100 characters"],
+    },
+    groupSize: {
+      type: Number,
+      min: [1, "Group size must be at least 1"],
+      max: [100, "Group size cannot exceed 100"],
+      validate: {
+        validator: function (groupSize) {
+          if (this.isGroupVisit && !groupSize) {
+            return false;
+          }
+          return true;
+        },
+        message: "Group size is required for group visits",
+      },
+    },
+    originDepartment: {
+      type: String,
+      trim: true,
+      maxlength: [100, "Origin department cannot exceed 100 characters"],
+    },
     requestedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -112,6 +162,12 @@ const visitorRequestSchema = new mongoose.Schema(
       type: String,
       enum: ["low", "medium", "high"],
       default: "medium",
+    },
+    location: {
+      type: String,
+      enum: ['Wollo Sefer', 'Operation'],
+      required: [true, 'Location is required'],
+      trim: true,
     },
   },
   {

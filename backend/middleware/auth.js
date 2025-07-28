@@ -24,6 +24,9 @@ const auth = async (req, res, next) => {
     if (!user || !user.isActive) {
       return next(new AppError("Invalid token or user inactive.", 401))
     }
+    if (!user.isApproved) {
+      return next(new AppError("Your account is pending approval by security.", 403))
+    }
 
     // Update last login
     user.lastLogin = new Date()

@@ -3,6 +3,15 @@ const bcrypt = require("bcryptjs")
 
 const userSchema = new mongoose.Schema(
   {
+    employeeId: {
+      type: String,
+      unique: true,
+      // required: [true, "Employee ID is required"], // Remove required to avoid validation error
+      default: function () {
+        return 'EMP' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      },
+      trim: true,
+    },
     username: {
       type: String,
       required: [true, "Username is required"],
@@ -39,6 +48,23 @@ const userSchema = new mongoose.Schema(
       },
       trim: true,
     },
+    departmentType: {
+      type: String,
+      enum: ['wing', 'director', 'division'],
+      required: function () {
+        return this.role === "department_user"
+      },
+      trim: true,
+    },
+    departmentRole: {
+      type: String,
+      enum: ['division_head', 'wing', 'director'],
+      default: 'division_head',
+      required: function () {
+        return this.role === "department_user"
+      },
+      trim: true,
+    },
     fullName: {
       type: String,
       required: [true, "Full name is required"],
@@ -49,12 +75,45 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
     lastLogin: {
       type: Date,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+    },
+    location: {
+      type: String,
+      enum: ['Wollo Sefer', 'Operation'],
+      required: [true, 'Location is required'],
+      trim: true,
+    },
+    // Delegation tracking
+    delegatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    delegatedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    delegationReason: {
+      type: String,
+      trim: true,
+    },
+    delegationStartDate: {
+      type: Date,
+    },
+    delegationEndDate: {
+      type: Date,
+    },
+    isDelegated: {
+      type: Boolean,
+      default: false,
     },
   },
   {
@@ -66,9 +125,33 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ username: 1 })
 userSchema.index({ email: 1 })
 userSchema.index({ role: 1 })
+userSchema.index({ employeeId: 1 })
 
-// Hash password before saving
+// Generate employee ID before saving
 userSchema.pre("save", async function (next) {
+  if (this.isNew && (!this.employeeId || this.employeeId === '')) {
+    try {
+      // Get the latest employee ID
+      const latestUser = await this.constructor.findOne({}, {}, { sort: { 'employeeId': -1 } });
+      let nextId = 1;
+      if (latestUser && latestUser.employeeId) {
+        const currentId = parseInt(latestUser.employeeId.replace('EMP', ''));
+        nextId = currentId + 1;
+      }
+      this.employeeId = `EMP${String(nextId).padStart(6, '0')}`;
+      console.log('[User pre-save] Generated employeeId:', this.employeeId);
+    } catch (error) {
+      console.error('[User pre-save] Error generating employeeId:', error);
+      // Fallback: set a random employeeId
+      this.employeeId = 'EMP' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      return next();
+    }
+  }
+  // Final fallback: if still missing, set a random employeeId
+  if (!this.employeeId || this.employeeId === '') {
+    this.employeeId = 'EMP' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+
   if (!this.isModified("password")) return next()
 
   try {

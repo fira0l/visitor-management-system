@@ -90,6 +90,46 @@ export const visitorAPI = {
     const response = await api.get("/visitors/analytics", { params })
     return response.data
   },
+
+  // Bulk upload methods
+  uploadPDF: async (file: File) => {
+    const formData = new FormData();
+    formData.append("pdf", file);
+    const response = await api.post("/bulk-upload/upload", formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  processPDF: async (id: string) => {
+    const response = await api.post(`/bulk-upload/process/${id}`);
+    return response.data;
+  },
+
+  importVisitors: async (id: string, selectedRows?: number[]) => {
+    const response = await api.post(`/bulk-upload/import/${id}`, { selectedRows });
+    return response.data;
+  },
+
+  getBulkUploads: async () => {
+    const response = await api.get("/bulk-upload/uploads");
+    return response.data;
+  },
+
+  getBulkUploadById: async (id: string) => {
+    const response = await api.get(`/bulk-upload/uploads/${id}`);
+    return response.data;
+  },
+
+  getUploadPermissions: async () => {
+    const response = await api.get("/bulk-upload/permissions");
+    return response.data;
+  },
+
+  updateUploadPermission: async (departmentType: string, permissionData: any) => {
+    const response = await api.patch(`/bulk-upload/permissions/${departmentType}`, permissionData);
+    return response.data;
+  },
 }
 
 export const userAPI = {
@@ -117,6 +157,75 @@ export const userAPI = {
     const response = await api.patch(`/users/${id}/status`, { isActive })
     return response.data
   },
+
+  approveUser: async (id: string) => {
+    const res = await api.patch(`/users/${id}/approve`);
+    return res.data;
+  },
 }
+
+export const delegationAPI = {
+  requestDelegation: async (delegationData: DelegationRequest) => {
+    const response = await api.post("/delegations/request", delegationData);
+    return response.data;
+  },
+
+  getDelegations: async (params: { status?: string; type?: string } = {}) => {
+    const response = await api.get("/delegations", { params });
+    return response.data;
+  },
+
+  reviewDelegation: async (delegationId: string, reviewData: DelegationReview) => {
+    const response = await api.patch(`/delegations/${delegationId}/review`, reviewData);
+    return response.data;
+  },
+
+  activateDelegation: async (delegationId: string) => {
+    const response = await api.patch(`/delegations/${delegationId}/activate`);
+    return response.data;
+  },
+
+  cancelDelegation: async (delegationId: string) => {
+    const response = await api.patch(`/delegations/${delegationId}/cancel`);
+    return response.data;
+  },
+
+  getActiveDelegations: async () => {
+    const response = await api.get("/delegations/active");
+    return response.data;
+  },
+}
+
+// Visitor Requests
+export const getVisitorRequests = (params?: any) =>
+  api.get("/visitors/requests", { params })
+
+export const getVisitorRequest = (id: string) =>
+  api.get(`/visitors/requests/${id}`)
+
+export const createVisitorRequest = (data: FormData) =>
+  api.post("/visitors/request", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+
+export const updateVisitorRequest = (id: string, data: FormData) =>
+  api.patch(`/visitors/requests/${id}`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+
+export const deleteVisitorRequest = (id: string) =>
+  api.delete(`/visitors/requests/${id}`)
+
+// New history and reuse functionality
+export const getVisitorHistory = (params: { visitorId?: string; nationalId?: string; visitorName?: string }) =>
+  api.get("/visitors/history", { params })
+
+export const reuseVisitorData = (originalRequestId: string, data: {
+  scheduledDate?: string
+  scheduledTime?: string
+  purpose?: string
+  itemsBrought?: string
+}) =>
+  api.post(`/visitors/requests/${originalRequestId}/reuse`, data)
 
 export default api 

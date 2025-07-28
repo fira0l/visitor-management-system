@@ -46,8 +46,8 @@ router.patch("/:id/status", authorize("admin"), async (req, res, next) => {
 // Create user (admin only)
 router.post("/", authorize("admin"), async (req, res, next) => {
   try {
-    const { username, email, password, role, department, fullName } = req.body;
-    if (!username || !email || !password || !role || !fullName) {
+    const { username, email, password, role, department, departmentType, location, fullName } = req.body;
+    if (!username || !email || !password || !role || !fullName || !location) {
       return next(new AppError("Missing required fields", 400));
     }
     // Prevent duplicate
@@ -55,7 +55,16 @@ router.post("/", authorize("admin"), async (req, res, next) => {
     if (existingUser) {
       return next(new AppError("User with this email or username already exists", 400));
     }
-    const user = await User.create({ username, email, password, role, department, fullName, createdBy: req.user._id });
+    // Generate employeeId if missing (fallback for pre-save hook issues)
+    let employeeId;
+    const latestUser = await User.findOne({}, {}, { sort: { 'employeeId': -1 } });
+    let nextId = 1;
+    if (latestUser && latestUser.employeeId) {
+      const currentId = parseInt(latestUser.employeeId.replace('EMP', ''));
+      nextId = currentId + 1;
+    }
+    employeeId = `EMP${String(nextId).padStart(6, '0')}`;
+    const user = await User.create({ username, email, password, role, department, departmentType, location, fullName, createdBy: req.user._id, employeeId });
     res.status(201).json({ success: true, message: "User created successfully", user });
   } catch (error) {
     next(error);
@@ -65,8 +74,8 @@ router.post("/", authorize("admin"), async (req, res, next) => {
 // Update user (admin only)
 router.patch("/:id", authorize("admin"), async (req, res, next) => {
   try {
-    const { username, email, role, department, fullName, isActive } = req.body;
-    const updateData = { username, email, role, department, fullName, isActive };
+    const { username, email, role, department, departmentType, location, fullName, isActive, departmentRole } = req.body;
+    const updateData = { username, email, role, department, departmentType, location, fullName, isActive, departmentRole };
     // Remove undefined fields
     Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
     const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
@@ -87,6 +96,27 @@ router.delete("/:id", authorize("admin"), async (req, res, next) => {
       return next(new AppError("User not found", 404));
     }
     res.json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Approve user (security only)
+router.patch("/:id/approve", authorize("security"), async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isApproved: true },
+      { new: true, runValidators: true }
+    );
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+    res.json({
+      success: true,
+      message: "User approved successfully.",
+      user,
+    });
   } catch (error) {
     next(error);
   }

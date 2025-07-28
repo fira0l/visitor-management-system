@@ -20,13 +20,18 @@ const VisitorRequests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [myStatusStats, setMyStatusStats] = useState({ approved: 0, declined: 0, pending: 0, checkedIn: 0, checkedOut: 0 });
+  const [locationFilter, setLocationFilter] = useState("");
+  const [gateFilter, setGateFilter] = useState("");
 
   useEffect(() => {
     const fetchRequests = async () => {
       setLoading(true);
       setError("");
       try {
-        const data = await visitorAPI.getRequests();
+        const params: any = {};
+        if (locationFilter) params.location = locationFilter;
+        if (gateFilter) params.gateAssignment = gateFilter;
+        const data = await visitorAPI.getRequests(params);
         setRequests(data.requests || data);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load requests");
@@ -35,7 +40,7 @@ const VisitorRequests: React.FC = () => {
       }
     };
     fetchRequests();
-  }, []);
+  }, [locationFilter, gateFilter]);
 
   // Real-time status stats for department_user
   useEffect(() => {
@@ -43,7 +48,10 @@ const VisitorRequests: React.FC = () => {
     let interval: NodeJS.Timeout;
     const fetchMyStats = async () => {
       try {
-        const data = await visitorAPI.getRequests();
+        const params: any = {};
+        if (locationFilter) params.location = locationFilter;
+        if (gateFilter) params.gateAssignment = gateFilter;
+        const data = await visitorAPI.getRequests(params);
         const myRequests = (data.requests || data).filter((v: VisitorRequest) => v.requestedBy?.username === user?.username);
         setMyStatusStats({
           approved: myRequests.filter((v: VisitorRequest) => v.status === "approved").length,
@@ -57,12 +65,36 @@ const VisitorRequests: React.FC = () => {
     fetchMyStats();
     interval = setInterval(fetchMyStats, 10000);
     return () => clearInterval(interval);
-  }, [user?.role, user?.username]);
+  }, [user?.role, user?.username, locationFilter, gateFilter]);
 
   const myRequests = requests.filter(r => r.requestedBy?.username === user?.username);
 
   return (
     <div className="max-w-5xl mx-auto p-6 animate-fade-in">
+      {/* Location Filter */}
+      <div className="mb-6 flex items-center gap-4">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Location:</label>
+        <select
+          value={locationFilter}
+          onChange={(e) => setLocationFilter(e.target.value)}
+          className="input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700"
+        >
+          <option value="">All Locations</option>
+          <option value="Wollo Sefer">Wollo Sefer</option>
+          <option value="Operation">Operation</option>
+        </select>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Gate:</label>
+        <select
+          value={gateFilter}
+          onChange={(e) => setGateFilter(e.target.value)}
+          className="input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700"
+        >
+          <option value="">All Gates</option>
+          <option value="Gate 1">Gate 1</option>
+          <option value="Gate 2">Gate 2</option>
+          <option value="Gate 3">Gate 3</option>
+        </select>
+      </div>
       {/* Department User status chart */}
       {user?.role === "department_user" && (
         <div className="card mb-8 animate-fade-in bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
@@ -110,6 +142,8 @@ const VisitorRequests: React.FC = () => {
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visitor</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Purpose</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visit Type & Details</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Gate/Access</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                   </tr>
@@ -120,6 +154,32 @@ const VisitorRequests: React.FC = () => {
                       <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{r.visitorName}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{r.purpose}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{r.scheduledDate?.slice(0, 10)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                        {r.isGroupVisit ? (
+                          <div>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                              Group Visit
+                            </span>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {r.companyName} ({r.groupSize} people)
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                              Individual
+                            </span>
+                            {r.originDepartment && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                From: {r.originDepartment}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                        {r.gateAssignment && r.accessType ? `${r.gateAssignment} (${r.accessType})` : '-'}
+                      </td>
                       <td className="px-4 py-2 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${
                           r.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :

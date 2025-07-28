@@ -4,7 +4,15 @@ const { AppError } = require("../utils/appError")
 
 const register = async (req, res, next) => {
   try {
-    const { username, email, password, role, department, fullName } = req.body
+    const { username, email, password, role, department, fullName, location, departmentType } = req.body
+
+    if (!location || !['Wollo Sefer', 'Operation'].includes(location)) {
+      return next(new AppError('Location is required and must be either Wollo Sefer or Operation', 400));
+    }
+
+    if (role === 'department_user' && (!departmentType || !['wing', 'director', 'division'].includes(departmentType))) {
+      return next(new AppError('Department type is required for department users and must be either wing, director, or division', 400));
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -15,6 +23,16 @@ const register = async (req, res, next) => {
       return next(new AppError("User with this email or username already exists", 400))
     }
 
+    // Generate employeeId if missing (fallback for pre-save hook issues)
+    let employeeId;
+    const latestUser = await User.findOne({}, {}, { sort: { 'employeeId': -1 } });
+    let nextId = 1;
+    if (latestUser && latestUser.employeeId) {
+      const currentId = parseInt(latestUser.employeeId.replace('EMP', ''));
+      nextId = currentId + 1;
+    }
+    employeeId = `EMP${String(nextId).padStart(6, '0')}`;
+
     // Create new user
     const user = await User.create({
       username,
@@ -23,16 +41,18 @@ const register = async (req, res, next) => {
       role,
       department,
       fullName,
+      location,
+      departmentType,
+      departmentRole: role === 'department_user' ? 'division_head' : undefined,
       createdBy: req.user ? req.user._id : null,
+      isApproved: false, // All new users must be approved by security
+      employeeId, // fallback
     })
 
-    // Generate JWT token
-    const token = generateToken(user._id)
-
+    // Do not generate token if not approved
     res.status(201).json({
       success: true,
-      message: "User created successfully",
-      token,
+      message: "User created successfully. Your account is pending approval by security.",
       user,
     })
   } catch (error) {
@@ -49,6 +69,9 @@ const login = async (req, res, next) => {
 
     if (!user || !user.isActive) {
       return next(new AppError("Invalid credentials or account inactive", 401))
+    }
+    if (!user.isApproved) {
+      return next(new AppError("Your account is pending approval by security.", 403))
     }
 
     // Check password

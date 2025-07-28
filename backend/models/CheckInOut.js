@@ -53,6 +53,12 @@ const checkInOutSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    location: {
+      type: String,
+      enum: ['Wollo Sefer', 'Operation'],
+      required: [true, 'Location is required'],
+      trim: true,
+    },
   },
   {
     timestamps: true,

@@ -11,14 +11,19 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [pendingApproval, setPendingApproval] = useState("");
   const { login, user, loading, error, clearError, isAuthenticated } = useAuth()
 
   useEffect(() => {
     if (error) {
-      toast.error(error)
-      clearError()
+      if (error === "Your account is pending approval by security.") {
+        setPendingApproval(error);
+      } else {
+        toast.error(error);
+      }
+      clearError();
     }
-  }, [error, clearError])
+  }, [error, clearError]);
 
   if (isAuthenticated && user) {
     return <Navigate to="/dashboard" replace />
@@ -68,6 +73,9 @@ const Login: React.FC = () => {
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 animate-fade-in">
+          {pendingApproval && (
+            <div className="text-yellow-600 text-center font-semibold text-lg mb-4 animate-fade-in">{pendingApproval}</div>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>

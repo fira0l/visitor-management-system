@@ -5,6 +5,10 @@ import type { VisitorRequest, DepartmentStat } from "../types";
 import { FaChartBar, FaUserCheck, FaUserTimes, FaUserShield, FaUser, FaUsers } from "react-icons/fa";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import toast from "react-hot-toast";
+import LoadingSpinner from "../components/LoadingSpinner.tsx";
+import UserManagement from "./UserManagement.tsx";
+import DelegationManagement from "./DelegationManagement.tsx";
+import AuditLogs from "./AuditLogs.tsx";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -14,6 +18,22 @@ const Dashboard: React.FC = () => {
   const [departmentStats, setDepartmentStats] = useState<DepartmentStat[]>([]);
   const [myStatusStats, setMyStatusStats] = useState({ approved: 0, declined: 0, pending: 0, checkedIn: 0, checkedOut: 0 });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [locationFilter, setLocationFilter] = useState("");
+  const [gateFilter, setGateFilter] = useState("");
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [filters, setFilters] = useState({
+    status: "",
+    department: "",
+    search: "",
+    location: "",
+    gateAssignment: "",
+    visitType: "",
+    startDate: "",
+    endDate: "",
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [adminTab, setAdminTab] = useState("requests");
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -21,7 +41,10 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       setError("");
       try {
-        const data = await visitorAPI.getRequests();
+        const params: any = {};
+        if (locationFilter) params.location = locationFilter;
+        if (gateFilter) params.gateAssignment = gateFilter;
+        const data = await visitorAPI.getRequests(params);
         setVisitors(data.requests || data);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load visitors");
@@ -32,7 +55,7 @@ const Dashboard: React.FC = () => {
     fetchVisitors();
     interval = setInterval(fetchVisitors, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [locationFilter, gateFilter]);
 
   // Real-time department stats for admin
   useEffect(() => {
@@ -40,14 +63,17 @@ const Dashboard: React.FC = () => {
     let interval: NodeJS.Timeout;
     const fetchDepartmentStats = async () => {
       try {
-        const data = await visitorAPI.getAnalytics();
+        const params: any = {};
+        if (locationFilter) params.location = locationFilter;
+        if (gateFilter) params.gateAssignment = gateFilter;
+        const data = await visitorAPI.getAnalytics(params);
         setDepartmentStats(data.departmentStats || []);
       } catch {}
     };
     fetchDepartmentStats();
     interval = setInterval(fetchDepartmentStats, 10000);
     return () => clearInterval(interval);
-  }, [user?.role]);
+  }, [user?.role, locationFilter, gateFilter]);
 
   // Real-time department_user status stats
   useEffect(() => {
@@ -55,7 +81,10 @@ const Dashboard: React.FC = () => {
     let interval: NodeJS.Timeout;
     const fetchMyStats = async () => {
       try {
-        const data = await visitorAPI.getRequests();
+        const params: any = {};
+        if (locationFilter) params.location = locationFilter;
+        if (gateFilter) params.gateAssignment = gateFilter;
+        const data = await visitorAPI.getRequests(params);
         const myRequests = (data.requests || data).filter((v: VisitorRequest) => v.requestedBy?.username === user?.username);
         setMyStatusStats({
           approved: myRequests.filter((v: VisitorRequest) => v.status === "approved").length,
@@ -69,7 +98,7 @@ const Dashboard: React.FC = () => {
     fetchMyStats();
     interval = setInterval(fetchMyStats, 10000);
     return () => clearInterval(interval);
-  }, [user?.role, user?.username]);
+  }, [user?.role, user?.username, locationFilter, gateFilter]);
 
   // Real-time updates for gate role
   useEffect(() => {
@@ -77,14 +106,17 @@ const Dashboard: React.FC = () => {
     let interval: NodeJS.Timeout;
     const fetchGateVisitors = async () => {
       try {
-        const data = await visitorAPI.getRequests();
+        const params: any = {};
+        if (locationFilter) params.location = locationFilter;
+        if (gateFilter) params.gateAssignment = gateFilter;
+        const data = await visitorAPI.getRequests(params);
         setVisitors(data.requests || data);
       } catch {}
     };
     fetchGateVisitors();
     interval = setInterval(fetchGateVisitors, 10000);
     return () => clearInterval(interval);
-  }, [user?.role]);
+  }, [user?.role, locationFilter, gateFilter]);
 
   const today = new Date().toISOString().slice(0, 10);
   
@@ -274,251 +306,268 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  return (
-    <div className="p-6 max-w-6xl mx-auto animate-fade-in">
-      <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 animate-pop-in text-gray-900 dark:text-gray-100">
-        <FaUser className="text-blue-500" /> Welcome, {user?.fullName || user?.username}!
-      </h1>
-      <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 animate-fade-in">Role: <span className="font-semibold capitalize">{user?.role.replace("_", " ")}</span></p>
-      {/* Admin department status chart */}
-      {user?.role === "admin" && departmentStats.length > 0 && (
-        <div className="card mb-8 animate-fade-in bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
-          <div className="card-header flex items-center gap-2">
-            <FaChartBar className="text-indigo-500" />
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Department Status Overview (Real-time)</h3>
-          </div>
-          <div className="card-body">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={departmentStats} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'} />
-                <XAxis dataKey="_id" stroke={document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'} />
-                <YAxis allowDecimals={false} stroke={document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'} />
-                <Tooltip contentStyle={{ background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#fff', color: document.documentElement.classList.contains('dark') ? '#fff' : '#111' }} />
-                <Bar dataKey="approved" fill="#22c55e" name="Approved" />
-                <Bar dataKey="declined" fill="#ef4444" name="Declined" />
-                <Bar dataKey="pending" fill="#eab308" name="Pending" />
-                <Bar dataKey="checkedIn" fill="#6366f1" name="Checked In" />
-                <Bar dataKey="checkedOut" fill="#6b7280" name="Checked Out" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        ...filters,
+        page: currentPage,
+        limit: 10,
+      };
+
+      const [requestsRes, analyticsRes] = await Promise.all([
+        visitorAPI.getRequests(params),
+        user?.role === "admin" ? visitorAPI.getAnalytics() : Promise.resolve({ data: null }),
+      ]);
+
+      setVisitors(requestsRes.data.requests);
+      setTotalPages(requestsRes.data.totalPages);
+      if (analyticsRes.data) {
+        setAnalytics(analyticsRes.data);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      status: "",
+      department: "",
+      search: "",
+      location: "",
+      gateAssignment: "",
+      visitType: "",
+      startDate: "",
+      endDate: "",
+    });
+    setCurrentPage(1);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusClasses = {
+      pending: "bg-yellow-100 text-yellow-800",
+      approved: "bg-green-100 text-green-800",
+      declined: "bg-red-100 text-red-800",
+      checked_in: "bg-blue-100 text-blue-800",
+      checked_out: "bg-gray-100 text-gray-800",
+    };
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClasses[status as keyof typeof statusClasses] || "bg-gray-100 text-gray-800"}`}>
+        {status.replace("_", " ").toUpperCase()}
+      </span>
+    );
+  };
+
+  const getVisitTypeBadge = (isGroupVisit: boolean, groupSize?: number) => {
+    if (isGroupVisit) {
+      return (
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+          Group ({groupSize || 'N/A'})
+        </span>
+      );
+    }
+    return (
+      <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+        Individual
+      </span>
+    );
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  // Admin tabbed dashboard
+  if (user?.role === "admin") {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+        <div className="mb-6 flex gap-2 border-b">
+          <button className={`px-4 py-2 font-semibold ${adminTab === "requests" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600"}`} onClick={() => setAdminTab("requests")}>Visitor Requests</button>
+          <button className={`px-4 py-2 font-semibold ${adminTab === "users" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600"}`} onClick={() => setAdminTab("users")}>User Management</button>
+          <button className={`px-4 py-2 font-semibold ${adminTab === "delegations" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600"}`} onClick={() => setAdminTab("delegations")}>Delegation Management</button>
+          <button className={`px-4 py-2 font-semibold ${adminTab === "audit" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600"}`} onClick={() => setAdminTab("audit")}>Audit Logs</button>
         </div>
-      )}
-      {/* Department User status chart */}
-      {user?.role === "department_user" && (
-        <div className="card mb-8 animate-fade-in bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
-          <div className="card-header flex items-center gap-2">
-            <FaChartBar className="text-indigo-500" />
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">My Request Status Overview (Real-time)</h3>
-          </div>
-          <div className="card-body">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={[
-                { status: "Approved", value: myStatusStats.approved },
-                { status: "Declined", value: myStatusStats.declined },
-                { status: "Pending", value: myStatusStats.pending },
-                { status: "Checked In", value: myStatusStats.checkedIn },
-                { status: "Checked Out", value: myStatusStats.checkedOut },
-              ]} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'} />
-                <XAxis dataKey="status" stroke={document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'} />
-                <YAxis allowDecimals={false} stroke={document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'} />
-                <Tooltip contentStyle={{ background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#fff', color: document.documentElement.classList.contains('dark') ? '#fff' : '#111' }} />
-                <Bar dataKey="value" fill="#6366f1" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-      {/* Gate User status chart */}
-      {user?.role === "gate" && gateStatusStats && (
-        <div className="card mb-8 animate-fade-in bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
-          <div className="card-header flex items-center gap-2">
-            <FaChartBar className="text-indigo-500" />
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Today's Visitor Status Overview (Real-time)</h3>
-          </div>
-          <div className="card-body">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={[
-                { status: "Approved", value: gateStatusStats.approved },
-                { status: "Checked In", value: gateStatusStats.checkedIn },
-                { status: "Checked Out", value: gateStatusStats.checkedOut },
-              ]} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'} />
-                <XAxis dataKey="status" stroke={document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'} />
-                <YAxis allowDecimals={false} stroke={document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'} />
-                <Tooltip contentStyle={{ background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#fff', color: document.documentElement.classList.contains('dark') ? '#fff' : '#111' }} />
-                <Bar dataKey="value" fill="#6366f1" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-      {/* Gate User visitor requests table */}
-      {user?.role === "gate" && (
-        <div className="card mb-8 animate-fade-in bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
-          <div className="card-header flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Visitor Requests</h2>
-          </div>
-          <div className="card-body">
-            {loading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            ) : error ? (
-              <div className="text-red-600 text-center py-4">{error}</div>
-            ) : (() => {
-              const today = new Date().toISOString().slice(0, 10);
-              const gateRequests = visitors.filter(v => ["approved", "checked_in", "checked_out"].includes(v.status) && v.scheduledDate?.slice(0, 10) === today);
-              if (gateRequests.length === 0) {
-                return <div className="text-gray-500 py-4 text-center">No requests found.</div>;
-              }
-              return (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-900">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visitor</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Purpose</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {gateRequests.map(r => (
-                        <tr key={r._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                          <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{r.visitorName}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{r.purpose}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{r.scheduledDate?.slice(0, 10)}</td>
-                          <td className="px-4 py-2 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                              r.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              r.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                              r.status === 'declined' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                              r.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                              r.status === 'checked_out' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300' :
-                              'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                            }`}>
-                              {r.status.replace("_", " ")}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2 whitespace-nowrap">
-                            {r.status === 'approved' && (
-                              <button
-                                className="btn-primary text-xs px-3 py-1 mr-2"
-                                disabled={actionLoading === r._id + '-checkin'}
-                                onClick={() => handleGateCheckIn(r._id)}
-                              >
-                                {actionLoading === r._id + '-checkin' ? 'Checking In...' : 'Check In'}
-                              </button>
-                            )}
-                            {r.status === 'checked_in' && (
-                              <button
-                                className="btn-secondary text-xs px-3 py-1"
-                                disabled={actionLoading === r._id + '-checkout'}
-                                onClick={() => handleGateCheckOut(r._id)}
-                              >
-                                {actionLoading === r._id + '-checkout' ? 'Checking Out...' : 'Check Out'}
-                              </button>
-                            )}
-                            {r.status === 'checked_out' && (
-                              <span className="text-gray-400 dark:text-gray-500 text-xs">Checked Out</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        {adminTab === "requests" && (
+          <>
+            {/* Existing analytics and requests table code here */}
+            {/* Analytics Section */}
+            {analytics && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Total Requests</h3>
+                  <p className="text-3xl font-bold text-blue-600">{analytics.totalRequests}</p>
                 </div>
-              );
-            })()}
-          </div>
-        </div>
-      )}
-      {/* Role-specific stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {getRoleSpecificStats().map((stat, index) => {
-          const icons = [FaChartBar, FaUserCheck, FaUserTimes, FaUserShield, FaUsers, FaUser];
-          const Icon = icons[index % icons.length];
-          const animatedValue = useCountUp(typeof stat.value === 'number' ? stat.value : 0);
-          return (
-            <div key={index} className={`card flex flex-col items-center ${stat.bgColor} transition-transform hover:scale-105 animate-fade-in bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700`} style={{ animationDelay: `${index * 60}ms`, minHeight: 120 }}>
-              <Icon className={`mb-2 text-2xl ${stat.color}`} />
-              <span className={`text-2xl font-bold ${stat.color}`}>{animatedValue}</span>
-              <span className="text-gray-700 dark:text-gray-300 mt-2 text-center">{stat.label}</span>
-            </div>
-          );
-        })}
-      </div>
-      {/* Role-specific visitor list */}
-      <div className="card mt-4 animate-fade-in bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
-        <div className="card-header flex items-center justify-between">
-          <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-            <FaChartBar className="text-indigo-500" /> {getRoleSpecificTitle()}
-          </h2>
-        </div>
-        <div className="card-body">
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : error ? (
-            <div className="text-red-600 text-center py-4 animate-fade-in">{error}</div>
-          ) : roleData.todayVisitors.length === 0 ? (
-            <div className="text-gray-500 py-4 text-center animate-fade-in">No visitors found.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visitor</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Purpose</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Department</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {roleData.todayVisitors.slice(0, 10).map((v, idx) => (
-                    <tr key={v._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors animate-fade-in" style={{ animationDelay: `${idx * 40}ms` }}>
-                      <td className="px-4 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{v.visitorName}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{v.purpose}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{v.department}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">{v.scheduledDate?.slice(0, 10)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          v.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          v.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                          v.status === 'declined' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                          v.status === 'checked_in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                          v.status === 'checked_out' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300' :
-                          'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                        } animate-pop-in`}>
-                          {v.status.replace("_", " ")}
-                        </span>
-                      </td>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Pending</h3>
+                  <p className="text-3xl font-bold text-yellow-600">{analytics.pendingRequests}</p>
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Approved</h3>
+                  <p className="text-3xl font-bold text-green-600">{analytics.approvedRequests}</p>
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Checked In</h3>
+                  <p className="text-3xl font-bold text-blue-600">{analytics.checkedInRequests}</p>
+                </div>
+              </div>
+            )}
+            {/* Requests Table */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold">Visitor Requests</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visitor</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visit Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              {roleData.todayVisitors.length > 10 && (
-                <div className="text-gray-500 py-4 text-center animate-fade-in">
-                  Showing first 10 results. View all in Visitor Requests.
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {visitors.map((request) => (
+                      <tr key={request._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{request.visitorName}</div>
+                            <div className="text-sm text-gray-500">{request.visitorId}</div>
+                            {request.companyName && (
+                              <div className="text-xs text-gray-400">{request.companyName}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{getVisitTypeBadge(request.isGroupVisit, request.groupSize)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm text-gray-900">{request.department}</div>
+                            <div className="text-xs text-gray-500">{request.departmentType}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm text-gray-900">{request.location}</div>
+                            {request.gateAssignment && (
+                              <div className="text-xs text-gray-500">{request.gateAssignment}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{new Date(request.scheduledDate).toLocaleDateString()}</div>
+                          <div className="text-sm text-gray-500">{request.scheduledTime}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(request.status)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-blue-600 hover:text-blue-900 mr-3">View</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Pagination as before */}
+              {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700">Page {currentPage} of {totalPages}</div>
+                    <div className="flex space-x-2">
+                      <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">Previous</button>
+                      <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">Next</button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-          )}
+          </>
+        )}
+        {adminTab === "users" && <UserManagement />}
+        {adminTab === "delegations" && <DelegationManagement isAdmin />}
+        {adminTab === "audit" && <AuditLogs />}
+      </div>
+    );
+  }
+
+  // Non-admin dashboard as before
+  if (user?.role === 'department_user') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        {/* Welcome Card */}
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg p-8 mb-8 flex flex-col md:flex-row items-center justify-between animate-fade-in">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Welcome, {user.fullName || user.username}!</h1>
+            <p className="text-lg text-blue-100">Here's a quick overview of your visitor requests and activity.</p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <button onClick={() => window.location.href='/create-request'} className="bg-white text-blue-600 font-semibold px-6 py-3 rounded-lg shadow hover:bg-blue-50 transition-transform hover:scale-105">+ New Visitor Request</button>
+          </div>
+        </div>
+        {/* Animated Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          {getRoleSpecificStats().map(stat => (
+            <div key={stat.label} className={`rounded-lg shadow-md p-6 flex flex-col items-center ${stat.bgColor} animate-pop-in`}>
+              <span className={`text-3xl font-bold ${stat.color}`}>{stat.value}</span>
+              <span className="text-sm font-medium text-gray-700 mt-2">{stat.label}</span>
+            </div>
+          ))}
+        </div>
+        {/* Recent Requests Table */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Recent Visitor Requests</h2>
+            <button onClick={() => window.location.href='/visitor-requests'} className="text-blue-600 hover:underline font-medium">View All</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visitor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {visitors.filter(v => v.requestedBy?.username === user.username).slice(0, 5).map(request => (
+                  <tr key={request._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{request.visitorName}</div>
+                      <div className="text-xs text-gray-500">{request.visitorId}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{request.purpose}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{new Date(request.scheduledDate).toLocaleDateString()}</div>
+                      <div className="text-xs text-gray-500">{request.scheduledTime}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(request.status)}</td>
+                  </tr>
+                ))}
+                {visitors.filter(v => v.requestedBy?.username === user.username).length === 0 && (
+                  <tr><td colSpan={4} className="text-center text-gray-400 py-6">No requests found.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-      <style>{`
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        .animate-fade-in { animation: fade-in 0.6s both; }
-        @keyframes pop-in { 0% { transform: scale(0.7); opacity: 0; } 80% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
-        .animate-pop-in { animation: pop-in 0.5s cubic-bezier(.4,2,.6,1) both; }
-      `}</style>
+    );
+  }
+  // Fallback for users with unknown roles
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+      <p className="text-gray-600">You do not have access to a specific dashboard view.</p>
     </div>
   );
-};
-
-export default Dashboard; 
+}
+export default Dashboard;
