@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useReducer, useEffect } from "react"
+import { createContext, useContext, useReducer, useEffect, useCallback } from "react"
 import type { User } from "../types"
 import { authAPI } from "../services/api.ts"
 
@@ -11,6 +11,7 @@ interface AuthState {
   loading: boolean
   error: string | null
   isAuthenticated: boolean
+  initialized: boolean
 }
 
 type AuthAction =
@@ -20,6 +21,7 @@ type AuthAction =
   | { type: "LOGOUT" }
   | { type: "CLEAR_ERROR" }
   | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_INITIALIZED" }
 
 const initialState: AuthState = {
   user: null,
@@ -27,6 +29,7 @@ const initialState: AuthState = {
   loading: true,
   error: null,
   isAuthenticated: false,
+  initialized: false,
 }
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
@@ -42,6 +45,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         loading: false,
         error: null,
         isAuthenticated: true,
+        initialized: true,
       }
     case "AUTH_FAILURE":
       localStorage.removeItem("token")
@@ -52,6 +56,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         loading: false,
         error: action.payload,
         isAuthenticated: false,
+        initialized: true,
       }
     case "LOGOUT":
       localStorage.removeItem("token")
@@ -62,11 +67,14 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         loading: false,
         error: null,
         isAuthenticated: false,
+        initialized: true,
       }
     case "CLEAR_ERROR":
       return { ...state, error: null }
     case "SET_LOADING":
       return { ...state, loading: action.payload }
+    case "SET_INITIALIZED":
+      return { ...state, initialized: true }
     default:
       return state
   }
@@ -91,26 +99,28 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      if (state.token) {
-        try {
-          dispatch({ type: "SET_LOADING", payload: true })
-          const response = await authAPI.getCurrentUser()
-          dispatch({
-            type: "AUTH_SUCCESS",
-            payload: { user: response.user, token: state.token },
-          })
-        } catch (error) {
-          dispatch({ type: "LOGOUT" })
-        }
-      } else {
-        dispatch({ type: "SET_LOADING", payload: false })
+  const initializeAuth = useCallback(async () => {
+    if (state.token && !state.initialized) {
+      try {
+        dispatch({ type: "SET_LOADING", payload: true })
+        const response = await authAPI.getCurrentUser()
+        dispatch({
+          type: "AUTH_SUCCESS",
+          payload: { user: response.user, token: state.token },
+        })
+      } catch (error: any) {
+        console.error("Auth initialization error:", error)
+        dispatch({ type: "LOGOUT" })
       }
+    } else if (!state.token) {
+      dispatch({ type: "SET_INITIALIZED" })
+      dispatch({ type: "SET_LOADING", payload: false })
     }
+  }, [state.token, state.initialized])
 
+  useEffect(() => {
     initializeAuth()
-  }, [])
+  }, [initializeAuth])
 
   const login = async (username: string, password: string) => {
     dispatch({ type: "AUTH_START" })
@@ -121,23 +131,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         payload: { user: response.user, token: response.token },
       })
     } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Login failed"
       dispatch({
         type: "AUTH_FAILURE",
-        payload: error.response?.data?.message || "Login failed",
+        payload: errorMessage,
       })
       throw error
     }
   }
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authAPI.logout()
     } catch (error) {
-      // Continue with logout even if API call fails
+      console.error("Logout API error:", error)
     } finally {
       dispatch({ type: "LOGOUT" })
     }
-  }
+  }, [])
 
   const clearError = () => {
     dispatch({ type: "CLEAR_ERROR" })

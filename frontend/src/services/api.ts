@@ -27,8 +27,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token")
-      window.location.href = "/login"
+      // Only redirect if we're not already on the login page
+      if (window.location.pathname !== "/login") {
+        localStorage.removeItem("token")
+        // Use a more graceful redirect
+        setTimeout(() => {
+          window.location.href = "/login"
+        }, 100)
+      }
     }
     return Promise.reject(error)
   },
@@ -91,6 +97,22 @@ export const visitorAPI = {
     return response.data
   },
 
+  // Visitor history and reuse functionality
+  getVisitorHistory: async (params: { visitorId?: string; nationalId?: string; visitorName?: string }) => {
+    const response = await api.get("/visitors/history", { params })
+    return response
+  },
+
+  reuseVisitorData: async (originalRequestId: string, data: {
+    scheduledDate?: string
+    scheduledTime?: string
+    purpose?: string
+    itemsBrought?: string
+  }) => {
+    const response = await api.post(`/visitors/requests/${originalRequestId}/reuse`, data)
+    return response
+  },
+
   // Bulk upload methods
   uploadPDF: async (file: File) => {
     const formData = new FormData();
@@ -106,126 +128,95 @@ export const visitorAPI = {
     return response.data;
   },
 
-  importVisitors: async (id: string, selectedRows?: number[]) => {
-    const response = await api.post(`/bulk-upload/import/${id}`, { selectedRows });
+  getBulkUploads: async (params: any = {}) => {
+    const response = await api.get("/bulk-upload", { params });
     return response.data;
   },
 
-  getBulkUploads: async () => {
-    const response = await api.get("/bulk-upload/uploads");
-    return response.data;
-  },
-
-  getBulkUploadById: async (id: string) => {
-    const response = await api.get(`/bulk-upload/uploads/${id}`);
-    return response.data;
-  },
-
-  getUploadPermissions: async () => {
-    const response = await api.get("/bulk-upload/permissions");
-    return response.data;
-  },
-
-  updateUploadPermission: async (departmentType: string, permissionData: any) => {
-    const response = await api.patch(`/bulk-upload/permissions/${departmentType}`, permissionData);
+  importVisitors: async (id: string, rowNumber: number) => {
+    const response = await api.post(`/bulk-upload/import/${id}`, { rowNumber });
     return response.data;
   },
 }
 
 export const userAPI = {
-  getUsers: async () => {
-    const response = await api.get("/users")
+  getUsers: async (params: any = {}) => {
+    const response = await api.get("/users", { params })
     return response.data
   },
 
-  createUser: async (userData: Partial<User> & { password: string }) => {
-    const response = await api.post("/users", userData);
-    return response.data;
+  createUser: async (userData: Partial<User>) => {
+    const response = await api.post("/users", userData)
+    return response.data
   },
 
   updateUser: async (id: string, userData: Partial<User>) => {
-    const response = await api.patch(`/users/${id}`, userData);
-    return response.data;
+    const response = await api.patch(`/users/${id}`, userData)
+    return response.data
   },
 
   deleteUser: async (id: string) => {
-    const response = await api.delete(`/users/${id}`);
-    return response.data;
-  },
-
-  updateUserStatus: async (id: string, isActive: boolean) => {
-    const response = await api.patch(`/users/${id}/status`, { isActive })
+    const response = await api.delete(`/users/${id}`)
     return response.data
   },
 
   approveUser: async (id: string) => {
-    const res = await api.patch(`/users/${id}/approve`);
-    return res.data;
+    const response = await api.patch(`/users/${id}/approve`)
+    return response.data
+  },
+
+  deactivateUser: async (id: string) => {
+    const response = await api.patch(`/users/${id}/deactivate`)
+    return response.data
   },
 }
 
 export const delegationAPI = {
-  requestDelegation: async (delegationData: DelegationRequest) => {
-    const response = await api.post("/delegations/request", delegationData);
-    return response.data;
+  getDelegations: async (params: any = {}) => {
+    const response = await api.get("/delegations", { params })
+    return response.data
   },
 
-  getDelegations: async (params: { status?: string; type?: string } = {}) => {
-    const response = await api.get("/delegations", { params });
-    return response.data;
+  createDelegation: async (delegationData: any) => {
+    const response = await api.post("/delegations", delegationData)
+    return response.data
   },
 
-  reviewDelegation: async (delegationId: string, reviewData: DelegationReview) => {
-    const response = await api.patch(`/delegations/${delegationId}/review`, reviewData);
-    return response.data;
+  updateDelegation: async (id: string, delegationData: any) => {
+    const response = await api.patch(`/delegations/${id}`, delegationData)
+    return response.data
   },
 
-  activateDelegation: async (delegationId: string) => {
-    const response = await api.patch(`/delegations/${delegationId}/activate`);
-    return response.data;
+  deleteDelegation: async (id: string) => {
+    const response = await api.delete(`/delegations/${id}`)
+    return response.data
   },
 
-  cancelDelegation: async (delegationId: string) => {
-    const response = await api.patch(`/delegations/${delegationId}/cancel`);
-    return response.data;
+  acceptDelegation: async (id: string) => {
+    const response = await api.patch(`/delegations/${id}/accept`)
+    return response.data
   },
 
-  getActiveDelegations: async () => {
-    const response = await api.get("/delegations/active");
-    return response.data;
+  rejectDelegation: async (id: string, reason: string) => {
+    const response = await api.patch(`/delegations/${id}/reject`, { reason })
+    return response.data
   },
 }
 
-// Visitor Requests
-export const getVisitorRequests = (params?: any) =>
-  api.get("/visitors/requests", { params })
+export const auditLogAPI = {
+  getAuditLogs: async (params: any = {}) => {
+    const response = await api.get("/audit-logs", { params })
+    return response.data
+  },
 
-export const getVisitorRequest = (id: string) =>
-  api.get(`/visitors/requests/${id}`)
+  exportAuditLogs: async (params: any = {}) => {
+    const response = await api.get("/audit-logs/export", { 
+      params,
+      responseType: 'blob'
+    })
+    return response.data
+  },
+}
 
-export const createVisitorRequest = (data: FormData) =>
-  api.post("/visitors/request", data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  })
-
-export const updateVisitorRequest = (id: string, data: FormData) =>
-  api.patch(`/visitors/requests/${id}`, data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  })
-
-export const deleteVisitorRequest = (id: string) =>
-  api.delete(`/visitors/requests/${id}`)
-
-// New history and reuse functionality
-export const getVisitorHistory = (params: { visitorId?: string; nationalId?: string; visitorName?: string }) =>
-  api.get("/visitors/history", { params })
-
-export const reuseVisitorData = (originalRequestId: string, data: {
-  scheduledDate?: string
-  scheduledTime?: string
-  purpose?: string
-  itemsBrought?: string
-}) =>
-  api.post(`/visitors/requests/${originalRequestId}/reuse`, data)
-
+// Export default api for backward compatibility
 export default api 

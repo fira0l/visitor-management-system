@@ -34,33 +34,46 @@ const Dashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [adminTab, setAdminTab] = useState("requests");
+  const [lastFetch, setLastFetch] = useState(0);
 
+  // Debounced fetch function to prevent excessive API calls
+  const debouncedFetch = useRef<NodeJS.Timeout>();
+  const fetchVisitors = async (force = false) => {
+    const now = Date.now();
+    if (!force && now - lastFetch < 5000) return; // Prevent fetching more than once every 5 seconds
+    
+    setLoading(true);
+    setError("");
+    try {
+      const params: any = {};
+      if (locationFilter) params.location = locationFilter;
+      if (gateFilter) params.gateAssignment = gateFilter;
+      const data = await visitorAPI.getRequests(params);
+      setVisitors(data.requests || data);
+      setLastFetch(now);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to load visitors");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch and periodic updates for visitors
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    const fetchVisitors = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const params: any = {};
-        if (locationFilter) params.location = locationFilter;
-        if (gateFilter) params.gateAssignment = gateFilter;
-        const data = await visitorAPI.getRequests(params);
-        setVisitors(data.requests || data);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load visitors");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchVisitors();
-    interval = setInterval(fetchVisitors, 10000);
+    fetchVisitors(true);
+    
+    // Set up interval for periodic updates (every 30 seconds instead of 10)
+    const interval = setInterval(() => {
+      fetchVisitors();
+    }, 30000);
+    
     return () => clearInterval(interval);
   }, [locationFilter, gateFilter]);
 
-  // Real-time department stats for admin
+  // Real-time department stats for admin (reduced frequency)
   useEffect(() => {
     if (user?.role !== "admin") return;
-    let interval: NodeJS.Timeout;
+    
     const fetchDepartmentStats = async () => {
       try {
         const params: any = {};
@@ -68,17 +81,22 @@ const Dashboard: React.FC = () => {
         if (gateFilter) params.gateAssignment = gateFilter;
         const data = await visitorAPI.getAnalytics(params);
         setDepartmentStats(data.departmentStats || []);
-      } catch {}
+      } catch (error) {
+        console.error("Failed to fetch department stats:", error);
+      }
     };
+    
     fetchDepartmentStats();
-    interval = setInterval(fetchDepartmentStats, 10000);
+    
+    // Reduced interval to 30 seconds
+    const interval = setInterval(fetchDepartmentStats, 30000);
     return () => clearInterval(interval);
   }, [user?.role, locationFilter, gateFilter]);
 
-  // Real-time department_user status stats
+  // Real-time department_user status stats (reduced frequency)
   useEffect(() => {
     if (user?.role !== "department_user") return;
-    let interval: NodeJS.Timeout;
+    
     const fetchMyStats = async () => {
       try {
         const params: any = {};
@@ -93,12 +111,34 @@ const Dashboard: React.FC = () => {
           checkedIn: myRequests.filter((v: VisitorRequest) => v.status === "checked_in").length,
           checkedOut: myRequests.filter((v: VisitorRequest) => v.status === "checked_out").length,
         });
-      } catch {}
+      } catch (error) {
+        console.error("Failed to fetch my stats:", error);
+      }
     };
+    
     fetchMyStats();
-    interval = setInterval(fetchMyStats, 10000);
+    
+    // Reduced interval to 30 seconds
+    const interval = setInterval(fetchMyStats, 30000);
     return () => clearInterval(interval);
-  }, [user?.role, user?.username, locationFilter, gateFilter]);
+  }, [user?.role, locationFilter, gateFilter, user?.username]);
+
+  // Debounced filter changes
+  useEffect(() => {
+    if (debouncedFetch.current) {
+      clearTimeout(debouncedFetch.current);
+    }
+    
+    debouncedFetch.current = setTimeout(() => {
+      fetchVisitors(true);
+    }, 500);
+    
+    return () => {
+      if (debouncedFetch.current) {
+        clearTimeout(debouncedFetch.current);
+      }
+    };
+  }, [filters]);
 
   // Real-time updates for gate role
   useEffect(() => {

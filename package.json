@@ -4,6 +4,7 @@
   "description": "MERN Stack Visitor Management System for INSA",
   "main": "index.js",
   "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd backend && npm run dev",
     "client": "cd frontend && npm start",
@@ -14,9 +15,15 @@
     "seed": "cd backend && npm run seed"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.2"
   },
-  "keywords": ["visitor-management", "mern", "react", "nodejs", "mongodb"],
+  "keywords": [
+    "visitor-management",
+    "mern",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
   "author": "Your Name",
   "license": "MIT"
 }

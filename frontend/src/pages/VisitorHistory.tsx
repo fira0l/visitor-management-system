@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext.tsx"
-import { getVisitorHistory, reuseVisitorData } from "../services/api.ts"
+import { visitorAPI } from "../services/api.ts"
 import { VisitorHistory as VisitorHistoryType, ReuseVisitorData } from "../types/index.ts"
 import LoadingSpinner from "../components/LoadingSpinner.tsx"
 import toast from "react-hot-toast"
@@ -31,7 +31,7 @@ const VisitorHistory: React.FC = () => {
 
     setLoading(true)
     try {
-      const response = await getVisitorHistory(searchParams)
+      const response = await visitorAPI.getVisitorHistory(searchParams)
       setHistory(response.data.history)
       if (response.data.history.length === 0) {
         toast.info("No visitor history found")
@@ -47,7 +47,7 @@ const VisitorHistory: React.FC = () => {
     if (!selectedRequest) return
 
     try {
-      const response = await reuseVisitorData(selectedRequest._id, reuseData)
+      const response = await visitorAPI.reuseVisitorData(selectedRequest._id, reuseData)
       toast.success("Visitor request created from history successfully!")
       setShowReuseModal(false)
       setSelectedRequest(null)

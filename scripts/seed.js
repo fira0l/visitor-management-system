@@ -23,6 +23,8 @@ const seedData = async () => {
         password: "admin123",
         role: "admin",
         fullName: "System Administrator",
+        location: "Wollo Sefer",
+        isApproved: true,
       },
       {
         username: "dept_user",
@@ -30,7 +32,11 @@ const seedData = async () => {
         password: "dept123",
         role: "department_user",
         department: "Computer Science",
+        departmentType: "division",
+        departmentRole: "division_head",
         fullName: "John Department",
+        location: "Wollo Sefer",
+        isApproved: true,
       },
       {
         username: "security",
@@ -38,6 +44,8 @@ const seedData = async () => {
         password: "security123",
         role: "security",
         fullName: "Security Officer",
+        location: "Wollo Sefer",
+        isApproved: true,
       },
       {
         username: "gate",
@@ -45,6 +53,8 @@ const seedData = async () => {
         password: "gate123",
         role: "gate",
         fullName: "Gate Security",
+        location: "Wollo Sefer",
+        isApproved: true,
       },
     ]
 
@@ -62,11 +72,14 @@ const seedData = async () => {
       {
         visitorName: "Alice Johnson",
         visitorId: "ID123456",
+        nationalId: "NAT123456789",
         visitorPhone: "+1234567890",
         visitorEmail: "alice@example.com",
         purpose: "Technical presentation and project discussion",
         itemsBrought: ["Laptop", "Presentation materials"],
         department: "Computer Science",
+        departmentType: "division",
+        location: "Wollo Sefer",
         requestedBy: deptUser._id,
         visitDuration: { hours: 3, days: 0 },
         scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
@@ -76,10 +89,13 @@ const seedData = async () => {
       {
         visitorName: "Bob Smith",
         visitorId: "ID789012",
+        nationalId: "NAT987654321",
         visitorPhone: "+1987654321",
         purpose: "Research collaboration meeting",
         itemsBrought: ["Documents", "USB Drive"],
         department: "Computer Science",
+        departmentType: "division",
+        location: "Wollo Sefer",
         requestedBy: deptUser._id,
         visitDuration: { hours: 2, days: 0 },
         scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
@@ -89,11 +105,14 @@ const seedData = async () => {
       {
         visitorName: "Carol Davis",
         visitorId: "ID345678",
+        nationalId: "NAT345678901",
         visitorPhone: "+1122334455",
         visitorEmail: "carol@company.com",
         purpose: "Industry partnership discussion",
         itemsBrought: ["Laptop", "Contract documents"],
         department: "Computer Science",
+        departmentType: "division",
+        location: "Wollo Sefer",
         requestedBy: deptUser._id,
         visitDuration: { hours: 4, days: 0 },
         scheduledDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday

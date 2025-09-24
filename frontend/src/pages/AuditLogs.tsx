@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { delegationAPI } from "../services/api.ts";
-import api from "../services/api.ts";
+import React, { useState, useEffect } from "react";
+import { auditLogAPI } from "../services/api.ts";
 import type { User } from "../types";
 
 const AuditLogs: React.FC = () => {
@@ -18,10 +17,10 @@ const AuditLogs: React.FC = () => {
     try {
       const params: any = {};
       if (action) params.action = action;
-      const res = await api.get("/audit-logs", { params });
-      setLogs(res.data.logs || []);
-    } catch {
-      //
+      const response = await auditLogAPI.getAuditLogs(params);
+      setLogs(response.logs || []);
+    } catch (error) {
+      console.error("Failed to fetch audit logs:", error);
     } finally {
       setLoading(false);
     }
