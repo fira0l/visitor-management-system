@@ -26,6 +26,10 @@ const CreateRequest: React.FC = () => {
   const [companyName, setCompanyName] = useState("");
   const [groupSize, setGroupSize] = useState(1);
   const [originDepartment, setOriginDepartment] = useState("");
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [otherItems, setOtherItems] = useState("");
+
+  const commonItems = ["USB", "Laptop", "Phone", "Tablet", "Camera", "Documents", "Bag"];
 
   // Initialize form with user's department settings
   useEffect(() => {
@@ -45,17 +49,31 @@ const CreateRequest: React.FC = () => {
     }
   };
 
+  const handleItemToggle = (item: string) => {
+    setSelectedItems(prev => 
+      prev.includes(item) 
+        ? prev.filter(i => i !== item)
+        : [...prev, item]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Combine selected items and other items
+      const allItems = [...selectedItems];
+      if (otherItems.trim()) {
+        allItems.push(otherItems.trim());
+      }
+      
       const formData = new FormData();
       formData.append("visitorName", form.visitorName);
       formData.append("visitorId", form.visitorId);
       formData.append("visitorPhone", form.visitorPhone);
       formData.append("visitorEmail", form.visitorEmail);
       formData.append("purpose", form.purpose);
-      formData.append("itemsBrought", form.itemsBrought);
+      formData.append("itemsBrought", allItems.join(", "));
       formData.append("visitDurationHours", String(form.visitDurationHours));
       formData.append("visitDurationDays", String(form.visitDurationDays));
       formData.append("scheduledDate", form.scheduledDate);
@@ -87,6 +105,13 @@ const CreateRequest: React.FC = () => {
         priority: "medium",
         nationalId: "",
       });
+      setSelectedItems([]);
+      setOtherItems("");
+      setPhoto(null);
+      setIsGroupVisit(false);
+      setCompanyName("");
+      setGroupSize(1);
+      setOriginDepartment("");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to submit request");
     } finally {
@@ -126,8 +151,32 @@ const CreateRequest: React.FC = () => {
               <textarea name="purpose" value={form.purpose} onChange={handleChange} required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Items Brought (comma separated)</label>
-              <input name="itemsBrought" value={form.itemsBrought} onChange={handleChange} className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Items Brought</label>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {commonItems.map((item) => (
+                    <label key={item} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.includes(item)}
+                        onChange={() => handleItemToggle(item)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{item}</span>
+                    </label>
+                  ))}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Others (specify)</label>
+                  <input
+                    type="text"
+                    value={otherItems}
+                    onChange={(e) => setOtherItems(e.target.value)}
+                    placeholder="Enter other items..."
+                    className="input-field w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700"
+                  />
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
