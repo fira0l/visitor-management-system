@@ -11,50 +11,16 @@ const createRequest = async (req, res, next) => {
       photoPath = `/uploads/${req.file.filename}`;
     }
 
-    // Ensure nationalId, location, and departmentType are present
-    const { nationalId, location, departmentType, gateAssignment, accessType, isGroupVisit, companyName, groupSize, originDepartment, ...rest } = req.body;
+    // Ensure nationalId and location are present
+    const { nationalId, location, isGroupVisit, companyName, groupSize, originDepartment, ...rest } = req.body;
     if (!nationalId) {
       return res.status(400).json({ success: false, message: "National ID is required" });
     }
     if (!location || !['Wollo Sefer', 'Operation'].includes(location)) {
       return res.status(400).json({ success: false, message: "Location is required and must be either Wollo Sefer or Operation" });
     }
-    if (!departmentType || !['wing', 'director', 'division'].includes(departmentType)) {
-      return res.status(400).json({ success: false, message: "Department type is required and must be either wing, director, or division" });
-    }
-    if (departmentType === 'wing' && (!gateAssignment || !['Gate 1', 'Gate 2', 'Gate 3'].includes(gateAssignment))) {
-      return res.status(400).json({ success: false, message: "Gate assignment is required for wing department type and must be Gate 1, Gate 2, or Gate 3" });
-    }
-    if (departmentType === 'wing' && (!accessType || !['VIP', 'Guest'].includes(accessType))) {
-      return res.status(400).json({ success: false, message: "Access type is required for wing department type and must be VIP or Guest" });
-    }
     if (isGroupVisit === 'true' && (!companyName || !groupSize)) {
       return res.status(400).json({ success: false, message: "Company name and group size are required for group visits" });
-    }
-
-    // Enforce departmentRole-based VIP permission restrictions
-    if (req.user.role === 'department_user' && accessType === 'VIP') {
-      const userRole = req.user.departmentRole;
-      if (userRole === 'division_head') {
-        if (gateAssignment !== 'Gate 1') {
-          // Check for active delegation granting VIP and gate access
-          const Delegation = require('../models/Delegation');
-          const activeDelegation = await Delegation.findOne({
-            requestedTo: req.user._id,
-            status: 'active',
-            isActive: true,
-            'permissions.gateAccess': gateAssignment,
-            'permissions.accessType': 'VIP',
-          });
-          if (!activeDelegation) {
-            return res.status(403).json({ success: false, message: "Division Head can only request VIP for Gate 1 unless delegated by Wing/Director." });
-          }
-        }
-      } else if (userRole === 'wing' || userRole === 'director') {
-        // Can request VIP for any gate
-      } else {
-        return res.status(403).json({ success: false, message: "You do not have permission to request VIP access." });
-      }
     }
 
     const visitorRequest = await VisitorRequest.create({
@@ -64,9 +30,6 @@ const createRequest = async (req, res, next) => {
       requestedBy: req.user._id,
       department: req.user.department,
       location,
-      departmentType,
-      gateAssignment,
-      accessType,
       isGroupVisit: isGroupVisit === 'true',
       companyName,
       groupSize: groupSize ? parseInt(groupSize) : undefined,
@@ -88,7 +51,7 @@ const createRequest = async (req, res, next) => {
 const getRequests = async (req, res, next) => {
   try {
     const query = {}
-    const { status, department, date, page = 1, limit = 10, search, location, gateAssignment, isGroupVisit, startDate, endDate, visitType } = req.query
+    const { status, department, date, page = 1, limit = 10, search, location, isGroupVisit, startDate, endDate, visitType } = req.query
 
     // Role-based filtering
     switch (req.user.role) {
@@ -131,7 +94,6 @@ const getRequests = async (req, res, next) => {
       ]
     }
     if (location && ['Wollo Sefer', 'Operation'].includes(location)) query.location = location
-    if (gateAssignment && ['Gate 1', 'Gate 2', 'Gate 3'].includes(gateAssignment)) query.gateAssignment = gateAssignment
     if (isGroupVisit === 'true') query.isGroupVisit = true
     if (isGroupVisit === 'false') query.isGroupVisit = false
     if (visitType === 'group') query.isGroupVisit = true
@@ -321,7 +283,7 @@ const checkOut = async (req, res, next) => {
 
 const getAnalytics = async (req, res, next) => {
   try {
-    const { startDate, endDate, department, location, gateAssignment } = req.query
+    const { startDate, endDate, department, location } = req.query
 
     const matchQuery = {}
     if (startDate && endDate) {
@@ -335,9 +297,6 @@ const getAnalytics = async (req, res, next) => {
     }
     if (location && ['Wollo Sefer', 'Operation'].includes(location)) {
       matchQuery.location = location
-    }
-    if (gateAssignment && ['Gate 1', 'Gate 2', 'Gate 3'].includes(gateAssignment)) {
-      matchQuery.gateAssignment = gateAssignment
     }
 
     const analytics = await VisitorRequest.aggregate([
@@ -503,9 +462,8 @@ const reuseVisitorData = async (req, res, next) => {
       return next(new AppError("Not authorized to reuse this request", 403))
     }
 
-    // Determine department, departmentType, and location for new request
+    // Determine department and location for new request
     let department = req.user.department;
-    let departmentType = req.user.departmentType;
     let location = req.user.location;
 
     // For department users, fallback to originalRequest if missing or empty
@@ -513,25 +471,18 @@ const reuseVisitorData = async (req, res, next) => {
       if (!department || department.trim() === '') {
         department = originalRequest.department;
       }
-      if (!departmentType || departmentType.trim() === '') {
-        departmentType = originalRequest.departmentType;
-      }
       if (!location || location.trim() === '') {
         location = originalRequest.location;
       }
     } else {
       // For other roles, fallback as before
       department = (department && department.trim()) ? department : originalRequest.department;
-      departmentType = (departmentType && departmentType.trim()) ? departmentType : originalRequest.departmentType;
       location = (location && location.trim()) ? location : originalRequest.location;
     }
 
     // Validate required fields
     if (!department || department.trim() === '') {
       return next(new AppError("Department is required for reuse", 400));
-    }
-    if (!departmentType || departmentType.trim() === '') {
-      return next(new AppError("Department type is required for reuse", 400));
     }
     if (!location || location.trim() === '') {
       return next(new AppError("Location is required for reuse", 400));
@@ -555,10 +506,7 @@ const reuseVisitorData = async (req, res, next) => {
       purpose: purpose || originalRequest.purpose,
       itemsBrought: itemsBrought ? itemsBrought.split(',').map(item => item.trim()) : originalRequest.itemsBrought,
       department,
-      departmentType,
       location,
-      gateAssignment: originalRequest.gateAssignment,
-      accessType: originalRequest.accessType,
       isGroupVisit: originalRequest.isGroupVisit,
       companyName: originalRequest.companyName,
       groupSize: originalRequest.groupSize,

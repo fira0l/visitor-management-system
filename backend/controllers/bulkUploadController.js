@@ -6,33 +6,9 @@ const pdfParse = require("pdf-parse")
 const fs = require("fs")
 
 // Check if user has permission to upload at current time
-const checkUploadPermission = async (departmentType) => {
-  const permission = await BulkUploadPermission.findOne({
-    departmentType,
-    canUpload: true,
-    isActive: true,
-  })
-
-  if (!permission) {
-    throw new AppError("Upload not allowed for this department type", 403)
-  }
-
-  const now = new Date()
-  const currentTime = now.toTimeString().slice(0, 5) // HH:MM format
-  const currentDay = now.toLocaleDateString('en-US', { weekday: 'lowercase' })
-
-  // Check if current time is within allowed windows
-  const isWithinTimeWindow = permission.allowedTimeWindows.some(window => {
-    const isCorrectDay = window.daysOfWeek.includes(currentDay)
-    const isCorrectTime = currentTime >= window.startTime && currentTime <= window.endTime
-    return isCorrectDay && isCorrectTime
-  })
-
-  if (!isWithinTimeWindow) {
-    throw new AppError("Upload not allowed at this time", 403)
-  }
-
-  return permission
+const checkUploadPermission = async () => {
+  // Simplified: All department users can upload
+  return true
 }
 
 // Upload PDF file
@@ -54,7 +30,7 @@ const uploadPDF = async (req, res, next) => {
     }
 
     // Check upload permission
-    await checkUploadPermission(req.user.departmentType)
+    await checkUploadPermission()
 
     // Create bulk upload record
     const bulkUpload = await BulkUpload.create({
@@ -62,7 +38,6 @@ const uploadPDF = async (req, res, next) => {
       filePath: req.file.path,
       fileSize: req.file.size,
       uploadedBy: req.user._id,
-      departmentType: req.user.departmentType,
       location: req.user.location,
     })
 
@@ -133,8 +108,6 @@ const processPDF = async (req, res, next) => {
             companyName: '',
             groupSize: 1,
             originDepartment: req.user.department,
-            gateAssignment: req.user.departmentType === 'wing' ? 'Gate 1' : undefined,
-            accessType: req.user.departmentType === 'wing' ? 'Guest' : undefined,
             rowNumber,
             status: 'pending',
           }
@@ -207,10 +180,7 @@ const importVisitors = async (req, res, next) => {
           visitorPhone: visitorData.visitorPhone,
           purpose: visitorData.purpose,
           department: req.user.department,
-          departmentType: req.user.departmentType,
           location: req.user.location,
-          gateAssignment: visitorData.gateAssignment,
-          accessType: visitorData.accessType,
           isGroupVisit: visitorData.groupSize > 1,
           companyName: visitorData.companyName,
           groupSize: visitorData.groupSize,

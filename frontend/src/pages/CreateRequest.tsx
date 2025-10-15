@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { visitorAPI } from "../services/api.ts";
-import { delegationAPI } from "../services/api.ts";
 import toast from "react-hot-toast";
 
 const CreateRequest: React.FC = () => {
@@ -23,30 +22,18 @@ const CreateRequest: React.FC = () => {
   const [photo, setPhoto] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState(user?.location || "");
-  const [departmentType, setDepartmentType] = useState(user?.departmentType || "");
-  const [gateAssignment, setGateAssignment] = useState("");
-  const [accessType, setAccessType] = useState("");
   const [isGroupVisit, setIsGroupVisit] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [groupSize, setGroupSize] = useState(1);
   const [originDepartment, setOriginDepartment] = useState("");
-  const [activeDelegation, setActiveDelegation] = useState<any>(null);
 
   // Initialize form with user's department settings
   useEffect(() => {
     if (user) {
       setLocation(user.location || "");
-      setDepartmentType(user.departmentType || "");
     }
   }, [user]);
 
-  useEffect(() => {
-    if (user?.departmentRole === 'division_head') {
-      delegationAPI.getActiveDelegations().then(res => {
-        setActiveDelegation(res.delegations && res.delegations.length > 0 ? res.delegations[0] : null);
-      });
-    }
-  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -76,11 +63,6 @@ const CreateRequest: React.FC = () => {
       formData.append("priority", form.priority);
       formData.append("nationalId", form.nationalId);
       formData.append("location", location);
-      formData.append("departmentType", departmentType);
-      if (departmentType === "wing") {
-        formData.append("gateAssignment", gateAssignment);
-        formData.append("accessType", accessType);
-      }
       formData.append("isGroupVisit", isGroupVisit.toString());
       if (isGroupVisit) {
         formData.append("companyName", companyName);
@@ -111,8 +93,6 @@ const CreateRequest: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const departmentRole = user?.departmentRole;
 
   return (
     <div className="max-w-2xl mx-auto p-6 animate-fade-in">
@@ -239,58 +219,6 @@ const CreateRequest: React.FC = () => {
                 <option value="Operation">Operation</option>
               </select>
             </div>
-            <div>
-              <label htmlFor="departmentType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Department Type</label>
-              <select id="departmentType" name="departmentType" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={departmentType} onChange={e => setDepartmentType(e.target.value)} disabled={loading}>
-                <option value="">Select department type</option>
-                <option value="wing">Wing</option>
-                <option value="director">Director</option>
-                <option value="division">Division</option>
-              </select>
-            </div>
-            {departmentType === "wing" && (
-              <>
-                <div>
-                  <label htmlFor="gateAssignment" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Gate Assignment</label>
-                  <select
-                    id="gateAssignment"
-                    name="gateAssignment"
-                    required
-                    className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700"
-                    value={gateAssignment}
-                    onChange={e => setGateAssignment(e.target.value)}
-                    disabled={loading}
-                  >
-                    <option value="">Select gate</option>
-                    <option value="Gate 1">Gate 1</option>
-                    {((departmentRole === 'wing' || departmentRole === 'director') || (accessType !== 'VIP') || (departmentRole === 'division_head' && activeDelegation && activeDelegation.permissions && activeDelegation.permissions.gateAccess && activeDelegation.permissions.gateAccess.includes('Gate 2') && activeDelegation.permissions.accessType.includes('VIP'))) && <option value="Gate 2">Gate 2</option>}
-                    {((departmentRole === 'wing' || departmentRole === 'director') || (accessType !== 'VIP') || (departmentRole === 'division_head' && activeDelegation && activeDelegation.permissions && activeDelegation.permissions.gateAccess && activeDelegation.permissions.gateAccess.includes('Gate 3') && activeDelegation.permissions.accessType.includes('VIP'))) && <option value="Gate 3">Gate 3</option>}
-                  </select>
-                  {departmentRole === 'division_head' && accessType === 'VIP' && (gateAssignment === 'Gate 2' || gateAssignment === 'Gate 3') && (!activeDelegation || !activeDelegation.permissions.gateAccess.includes(gateAssignment)) && (
-                    <div className="text-red-600 text-xs mt-1">Division Head can only request VIP for Gate 1 unless delegated by Wing/Director.</div>
-                  )}
-                  {departmentRole === 'division_head' && activeDelegation && (
-                    <div className="text-green-600 text-xs mt-1">Delegation active: VIP access for {activeDelegation.permissions.gateAccess.join(', ')}</div>
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="accessType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Access Type</label>
-                  <select
-                    id="accessType"
-                    name="accessType"
-                    required
-                    className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700"
-                    value={accessType}
-                    onChange={e => setAccessType(e.target.value)}
-                    disabled={loading}
-                  >
-                    <option value="">Select access type</option>
-                    <option value="VIP">VIP</option>
-                    <option value="Guest">Guest</option>
-                  </select>
-                </div>
-              </>
-            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Visitor Photo</label>
               <input name="photo" type="file" accept="image/*" onChange={handlePhotoChange} className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />

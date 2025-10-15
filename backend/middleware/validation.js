@@ -54,12 +54,6 @@ const validateRegistration = [
     .if(body("role").equals("department_user"))
     .notEmpty()
     .withMessage("Department is required for department users"),
-  body("departmentType")
-    .if(body("role").equals("department_user"))
-    .notEmpty()
-    .withMessage("Department type is required for department users")
-    .isIn(["wing", "director", "division"])
-    .withMessage("Department type must be wing, director, or division"),
   body("location")
     .notEmpty()
     .withMessage("Location is required")
@@ -109,23 +103,6 @@ const validateVisitorRequest = [
     .withMessage("Location is required")
     .isIn(["Wollo Sefer", "Operation"])
     .withMessage("Location must be Wollo Sefer or Operation"),
-  body("departmentType")
-    .notEmpty()
-    .withMessage("Department type is required")
-    .isIn(["wing", "director", "division"])
-    .withMessage("Department type must be wing, director, or division"),
-  body("gateAssignment")
-    .if(body("departmentType").equals("wing"))
-    .notEmpty()
-    .withMessage("Gate assignment is required for wing departments")
-    .isIn(["Gate 1", "Gate 2", "Gate 3"])
-    .withMessage("Gate assignment must be Gate 1, Gate 2, or Gate 3"),
-  body("accessType")
-    .if(body("departmentType").equals("wing"))
-    .notEmpty()
-    .withMessage("Access type is required for wing departments")
-    .isIn(["VIP", "Guest"])
-    .withMessage("Access type must be VIP or Guest"),
   body("isGroupVisit")
     .optional()
     .isBoolean()

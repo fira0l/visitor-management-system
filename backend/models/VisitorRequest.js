@@ -52,28 +52,6 @@ const visitorRequestSchema = new mongoose.Schema(
       required: [true, "Department is required"],
       trim: true,
     },
-    departmentType: {
-      type: String,
-      enum: ['wing', 'director', 'division'],
-      required: [true, 'Department type is required'],
-      trim: true,
-    },
-    gateAssignment: {
-      type: String,
-      enum: ['Gate 1', 'Gate 2', 'Gate 3'],
-      required: function () {
-        return this.departmentType === 'wing'
-      },
-      trim: true,
-    },
-    accessType: {
-      type: String,
-      enum: ['VIP', 'Guest'],
-      required: function () {
-        return this.departmentType === 'wing'
-      },
-      trim: true,
-    },
     isGroupVisit: {
       type: Boolean,
       default: false,

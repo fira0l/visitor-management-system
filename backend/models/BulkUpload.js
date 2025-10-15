@@ -21,12 +21,6 @@ const bulkUploadSchema = new mongoose.Schema(
       ref: "User",
       required: [true, 'Uploaded by is required'],
     },
-    departmentType: {
-      type: String,
-      enum: ['wing', 'director', 'division'],
-      required: [true, 'Department type is required'],
-      trim: true,
-    },
     location: {
       type: String,
       enum: ['Wollo Sefer', 'Operation'],
@@ -73,8 +67,6 @@ const bulkUploadSchema = new mongoose.Schema(
         companyName: String, // for group visits
         groupSize: Number, // for group visits
         originDepartment: String, // for individual visits
-        gateAssignment: String,
-        accessType: String,
         rowNumber: Number,
         status: {
           type: String,
@@ -102,7 +94,6 @@ const bulkUploadSchema = new mongoose.Schema(
 
 // Index for better query performance
 bulkUploadSchema.index({ uploadedBy: 1 })
-bulkUploadSchema.index({ departmentType: 1 })
 bulkUploadSchema.index({ status: 1 })
 bulkUploadSchema.index({ createdAt: 1 })
 

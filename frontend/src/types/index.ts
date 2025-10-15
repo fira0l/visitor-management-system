@@ -56,9 +56,6 @@ export interface VisitorRequest {
   createdAt: string
   updatedAt: string
   location: "Wollo Sefer" | "Operation"
-  departmentType: "wing" | "director" | "division"
-  gateAssignment?: "Gate 1" | "Gate 2" | "Gate 3"
-  accessType?: "VIP" | "Guest"
   isGroupVisit: boolean
   companyName?: string
   groupSize?: number
@@ -202,10 +199,7 @@ export interface VisitorHistory {
   visitorEmail: string
   purpose: string
   department: string
-  departmentType: string
   location: string
-  gateAssignment?: string
-  accessType?: string
   isGroupVisit: boolean
   companyName?: string
   groupSize?: number
