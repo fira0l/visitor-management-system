@@ -7,7 +7,8 @@ const {
   createRequest,
   getRequests,
   getRequest,
-  reviewRequest,
+  approveRequest,
+  divisionApproval,
   checkIn,
   checkOut,
   getAnalytics,
@@ -53,8 +54,9 @@ router.get("/requests/:id", getRequest)
 router.get("/history", getVisitorHistory)
 router.post("/requests/:originalRequestId/reuse", reuseVisitorData)
 
-// Security team routes
-router.patch("/requests/:id/review", authorize("security"), reviewRequest)
+// Division head routes
+router.patch("/requests/:id/approve", authorize("department_user"), approveRequest)
+router.patch("/requests/:id/division-approval", authorize("department_user"), divisionApproval)
 
 // Gate security routes
 router.post("/checkin/:id", authorize("gate"), checkIn)

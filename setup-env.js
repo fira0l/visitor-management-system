@@ -4,7 +4,7 @@ const path = require('path');
 // Backend .env content
 const backendEnv = `NODE_ENV=development
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/visitor-management
+MONGODB_URI="mongodb+srv://fira0l_db_user:talent%40123@talent.inescye.mongodb.net/Visitormanagement?retryWrites=true&w=majority&appName=Talent"
 JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random-123456789
 JWT_EXPIRE=24h
 BCRYPT_ROUNDS=12

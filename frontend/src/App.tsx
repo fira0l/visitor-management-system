@@ -81,14 +81,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="security-review"
-                element={
-                  <ProtectedRoute allowedRoles={["security"]}>
-                    <SecurityReview />
-                  </ProtectedRoute>
-                }
-              />
+
               <Route
                 path="admin-logs"
                 element={

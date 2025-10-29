@@ -39,30 +39,23 @@ const userSchema = new mongoose.Schema(
         values: ["admin", "department_user", "security", "gate"],
         message: "Role must be admin, department_user, security, or gate",
       },
-      required: [true, "Role is required"],
+      default: "department_user",
     },
     department: {
       type: String,
-      required: function () {
-        return this.role === "department_user"
-      },
+      required: [true, "Department is required"],
       trim: true,
     },
     departmentType: {
       type: String,
       enum: ['wing', 'director', 'division'],
-      required: function () {
-        return this.role === "department_user"
-      },
+      default: 'division',
       trim: true,
     },
     departmentRole: {
       type: String,
       enum: ['division_head', 'wing', 'director'],
       default: 'division_head',
-      required: function () {
-        return this.role === "department_user"
-      },
       trim: true,
     },
     fullName: {
@@ -131,25 +124,30 @@ userSchema.index({ employeeId: 1 })
 userSchema.pre("save", async function (next) {
   if (this.isNew && (!this.employeeId || this.employeeId === '')) {
     try {
-      // Get the latest employee ID
-      const latestUser = await this.constructor.findOne({}, {}, { sort: { 'employeeId': -1 } });
+      // Get the latest employee ID with proper numeric extraction
+      const latestUser = await this.constructor.findOne(
+        { employeeId: { $regex: /^EMP\d{6}$/ } },
+        {},
+        { sort: { employeeId: -1 } }
+      );
       let nextId = 1;
       if (latestUser && latestUser.employeeId) {
-        const currentId = parseInt(latestUser.employeeId.replace('EMP', ''));
-        nextId = currentId + 1;
+        const numericPart = latestUser.employeeId.replace('EMP', '');
+        const currentId = parseInt(numericPart, 10);
+        if (!isNaN(currentId)) {
+          nextId = currentId + 1;
+        }
       }
       this.employeeId = `EMP${String(nextId).padStart(6, '0')}`;
-      console.log('[User pre-save] Generated employeeId:', this.employeeId);
     } catch (error) {
       console.error('[User pre-save] Error generating employeeId:', error);
-      // Fallback: set a random employeeId
-      this.employeeId = 'EMP' + Math.random().toString(36).substring(2, 10).toUpperCase();
-      return next();
+      // Fallback: set a random employeeId with timestamp
+      this.employeeId = 'EMP' + Date.now().toString().slice(-6);
     }
   }
   // Final fallback: if still missing, set a random employeeId
-  if (!this.employeeId || this.employeeId === '') {
-    this.employeeId = 'EMP' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  if (!this.employeeId || this.employeeId === '' || this.employeeId.includes('NaN')) {
+    this.employeeId = 'EMP' + Date.now().toString().slice(-6);
   }
 
   if (!this.isModified("password")) return next()

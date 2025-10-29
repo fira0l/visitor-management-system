@@ -77,8 +77,14 @@ export const visitorAPI = {
     return response.data
   },
 
-  reviewRequest: async (id: string, reviewData: { status: string; reviewComments?: string }) => {
-    const response = await api.patch(`/visitors/requests/${id}/review`, reviewData)
+  // Division head approval functions
+  approveRequest: async (id: string, approvalData: { approvalType: string; approvalComments?: string }) => {
+    const response = await api.patch(`/visitors/requests/${id}/approve`, approvalData)
+    return response.data
+  },
+
+  divisionApproval: async (id: string, approvalData: { status: string; approvalComments: string }) => {
+    const response = await api.patch(`/visitors/requests/${id}/division-approval`, approvalData)
     return response.data
   },
 

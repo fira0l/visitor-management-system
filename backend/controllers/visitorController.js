@@ -11,13 +11,19 @@ const createRequest = async (req, res, next) => {
       photoPath = `/uploads/${req.file.filename}`;
     }
 
-    // Ensure nationalId and location are present
-    const { nationalId, location, isGroupVisit, companyName, groupSize, originDepartment, ...rest } = req.body;
+    // Ensure required fields are present
+    const { nationalId, location, gateAssignment, searchRequired, isGroupVisit, companyName, groupSize, originDepartment, ...rest } = req.body;
     if (!nationalId) {
       return res.status(400).json({ success: false, message: "National ID is required" });
     }
     if (!location || !['Wollo Sefer', 'Operation'].includes(location)) {
       return res.status(400).json({ success: false, message: "Location is required and must be either Wollo Sefer or Operation" });
+    }
+    if (!gateAssignment || !['Gate 1', 'Gate 2', 'Gate 3'].includes(gateAssignment)) {
+      return res.status(400).json({ success: false, message: "Gate assignment is required and must be Gate 1, Gate 2, or Gate 3" });
+    }
+    if (!searchRequired || !['required', 'not_required'].includes(searchRequired)) {
+      return res.status(400).json({ success: false, message: "Search requirement is required and must be either required or not_required" });
     }
     if (isGroupVisit === 'true' && (!companyName || !groupSize)) {
       return res.status(400).json({ success: false, message: "Company name and group size are required for group visits" });
@@ -30,6 +36,8 @@ const createRequest = async (req, res, next) => {
       requestedBy: req.user._id,
       department: req.user.department,
       location,
+      gateAssignment,
+      searchRequired,
       isGroupVisit: isGroupVisit === 'true',
       companyName,
       groupSize: groupSize ? parseInt(groupSize) : undefined,
@@ -51,15 +59,20 @@ const createRequest = async (req, res, next) => {
 const getRequests = async (req, res, next) => {
   try {
     const query = {}
-    const { status, department, date, page = 1, limit = 10, search, location, isGroupVisit, startDate, endDate, visitType } = req.query
+    const { status, department, date, page = 1, limit = 10, search, location, gateAssignment, isGroupVisit, startDate, endDate, visitType } = req.query
 
     // Role-based filtering
     switch (req.user.role) {
       case "department_user":
-        query.requestedBy = req.user._id
-        break
-      case "security":
-        query.status = { $in: ["pending", "approved", "declined"] }
+        if (req.user.departmentRole === "division_head") {
+          // Division heads can see their department's requests and pending division approvals
+          query.$or = [
+            { requestedBy: req.user._id },
+            { department: req.user.department, status: "pending_division_approval" }
+          ]
+        } else {
+          query.requestedBy = req.user._id
+        }
         break
       case "gate":
         query.status = { $in: ["approved", "checked_in"] }
@@ -94,6 +107,7 @@ const getRequests = async (req, res, next) => {
       ]
     }
     if (location && ['Wollo Sefer', 'Operation'].includes(location)) query.location = location
+    if (gateAssignment && ['Gate 1', 'Gate 2', 'Gate 3'].includes(gateAssignment)) query.gateAssignment = gateAssignment
     if (isGroupVisit === 'true') query.isGroupVisit = true
     if (isGroupVisit === 'false') query.isGroupVisit = false
     if (visitType === 'group') query.isGroupVisit = true
@@ -102,6 +116,7 @@ const getRequests = async (req, res, next) => {
     const requests = await VisitorRequest.find(query)
       .populate("requestedBy", "fullName username department")
       .populate("reviewedBy", "fullName username")
+      .populate("approvedBy", "fullName username department")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -125,6 +140,7 @@ const getRequest = async (req, res, next) => {
     const request = await VisitorRequest.findById(req.params.id)
       .populate("requestedBy", "fullName username department")
       .populate("reviewedBy", "fullName username")
+      .populate("approvedBy", "fullName username department")
 
     if (!request) {
       return next(new AppError("Request not found", 404))
@@ -155,9 +171,62 @@ const getRequest = async (req, res, next) => {
   }
 }
 
-const reviewRequest = async (req, res, next) => {
+const approveRequest = async (req, res, next) => {
   try {
-    const { status, reviewComments } = req.body
+    const { approvalType, approvalComments } = req.body
+
+    if (!["own_risk", "division_approval"].includes(approvalType)) {
+      return next(new AppError("Invalid approval type. Must be own_risk or division_approval.", 400))
+    }
+
+    const request = await VisitorRequest.findById(req.params.id)
+    if (!request) {
+      return next(new AppError("Visitor request not found", 404))
+    }
+
+    // Check if user is division head and can approve this request
+    if (req.user.role !== "department_user" || req.user.departmentRole !== "division_head") {
+      return next(new AppError("Only division heads can approve requests", 403))
+    }
+
+    if (approvalType === "own_risk") {
+      if (request.status !== "pending") {
+        return next(new AppError("Request has already been processed", 400))
+      }
+      
+      request.status = "approved"
+      request.approvalType = "own_risk"
+      request.approvedBy = req.user._id
+      request.approvedAt = new Date()
+      request.approvalComments = approvalComments
+    } else if (approvalType === "division_approval") {
+      if (request.status !== "pending") {
+        return next(new AppError("Request has already been processed", 400))
+      }
+      
+      request.status = "pending_division_approval"
+      request.approvalType = "division_approval"
+      request.reviewedBy = req.user._id
+      request.reviewedAt = new Date()
+      request.reviewComments = approvalComments
+    }
+
+    await request.save()
+    await request.populate(["requestedBy", "approvedBy", "reviewedBy"])
+
+    res.json({
+      success: true,
+      message: approvalType === "own_risk" ? "Request approved by own risk" : "Request sent for division approval",
+      request,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const divisionApproval = async (req, res, next) => {
+  try {
+    const { status, approvalComments } = req.body
 
     if (!["approved", "declined"].includes(status)) {
       return next(new AppError("Invalid status. Must be approved or declined.", 400))
@@ -168,21 +237,28 @@ const reviewRequest = async (req, res, next) => {
       return next(new AppError("Visitor request not found", 404))
     }
 
-    if (request.status !== "pending") {
-      return next(new AppError("Request has already been reviewed", 400))
+    if (request.status !== "pending_division_approval") {
+      return next(new AppError("Request is not pending division approval", 400))
+    }
+
+    // Check if user is division head of the same department
+    if (req.user.role !== "department_user" || 
+        req.user.departmentRole !== "division_head" || 
+        req.user.department !== request.department) {
+      return next(new AppError("Only division head of the same department can approve this request", 403))
     }
 
     request.status = status
-    request.reviewedBy = req.user._id
-    request.reviewedAt = new Date()
-    request.reviewComments = reviewComments
+    request.approvedBy = req.user._id
+    request.approvedAt = new Date()
+    request.approvalComments = approvalComments
 
     await request.save()
-    await request.populate(["requestedBy", "reviewedBy"])
+    await request.populate(["requestedBy", "approvedBy", "reviewedBy"])
 
     res.json({
       success: true,
-      message: `Request ${status} successfully`,
+      message: `Request ${status} by division head`,
       request,
     })
   } catch (error) {
@@ -314,6 +390,9 @@ const getAnalytics = async (req, res, next) => {
           pendingRequests: {
             $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
           },
+          pendingDivisionApproval: {
+            $sum: { $cond: [{ $eq: ["$status", "pending_division_approval"] }, 1, 0] },
+          },
           checkedInRequests: {
             $sum: { $cond: [{ $eq: ["$status", "checked_in"] }, 1, 0] },
           },
@@ -339,6 +418,9 @@ const getAnalytics = async (req, res, next) => {
           pending: {
             $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
           },
+          pendingDivisionApproval: {
+            $sum: { $cond: [{ $eq: ["$status", "pending_division_approval"] }, 1, 0] },
+          },
           checkedIn: {
             $sum: { $cond: [{ $eq: ["$status", "checked_in"] }, 1, 0] },
           },
@@ -357,6 +439,7 @@ const getAnalytics = async (req, res, next) => {
         approvedRequests: 0,
         declinedRequests: 0,
         pendingRequests: 0,
+        pendingDivisionApproval: 0,
         checkedInRequests: 0,
         checkedOutRequests: 0,
       },
@@ -434,6 +517,7 @@ const getVisitorHistory = async (req, res, next) => {
     const history = await VisitorRequest.find(query)
       .populate("requestedBy", "fullName username department")
       .populate("reviewedBy", "fullName username")
+      .populate("approvedBy", "fullName username department")
       .sort({ createdAt: -1 })
       .limit(20)
 
@@ -535,7 +619,8 @@ module.exports = {
   createRequest,
   getRequests,
   getRequest,
-  reviewRequest,
+  approveRequest,
+  divisionApproval,
   checkIn,
   checkOut,
   getAnalytics,

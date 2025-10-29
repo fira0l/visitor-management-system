@@ -59,16 +59,17 @@ const Layout: React.FC = () => {
           { name: "Create Request", href: "/create-request", icon: PlusIcon },
           { name: "Visitor History", href: "/visitor-history", icon: ClockIcon }
         ]
-      case "security":
-        return [...baseItems, { name: "Security Review", href: "/security-review", icon: DocumentTextIcon }]
+
       case "gate":
         return [...baseItems, { name: "Check In/Out", href: "/checkin-checkout", icon: UserGroupIcon }]
+      case "security":
+        return [...baseItems]
       case "admin":
         return [
           ...baseItems,
           { name: "User Management", href: "/admin/users", icon: UserGroupIcon },
           { name: "Admin Logs", href: "/admin-logs", icon: ClipboardDocumentListIcon },
-          { name: "Security Review", href: "/security-review", icon: DocumentTextIcon },
+
           { name: "Check In/Out", href: "/checkin-checkout", icon: UserGroupIcon },
           { name: "Analytics", href: "/analytics", icon: ChartBarIcon },
           { name: "Visitor History", href: "/visitor-history", icon: ClockIcon }

@@ -4,14 +4,14 @@ const { AppError } = require("../utils/appError")
 
 const register = async (req, res, next) => {
   try {
-    const { username, email, password, role, department, fullName, location, departmentType } = req.body
+    const { username, email, password, department, fullName, location } = req.body
 
     if (!location || !['Wollo Sefer', 'Operation'].includes(location)) {
       return next(new AppError('Location is required and must be either Wollo Sefer or Operation', 400));
     }
 
-    if (role === 'department_user' && (!departmentType || !['wing', 'director', 'division'].includes(departmentType))) {
-      return next(new AppError('Department type is required for department users and must be either wing, director, or division', 400));
+    if (!department || !department.trim()) {
+      return next(new AppError('Department is required', 400));
     }
 
     // Check if user already exists
@@ -33,26 +33,26 @@ const register = async (req, res, next) => {
     }
     employeeId = `EMP${String(nextId).padStart(6, '0')}`;
 
-    // Create new user
+    // Create new user with default role as department_user
     const user = await User.create({
       username,
       email,
       password,
-      role,
+      role: 'department_user', // Default role for all new signups
       department,
       fullName,
       location,
-      departmentType,
-      departmentRole: role === 'department_user' ? 'division_head' : undefined,
+      departmentType: 'division', // Default department type
+      departmentRole: 'division_head', // Default department role
       createdBy: req.user ? req.user._id : null,
-      isApproved: false, // All new users must be approved by security
+      isApproved: false, // All new users must be approved by admin
       employeeId, // fallback
     })
 
     // Do not generate token if not approved
     res.status(201).json({
       success: true,
-      message: "User created successfully. Your account is pending approval by security.",
+      message: "User created successfully. Your account is pending approval by admin.",
       user,
     })
   } catch (error) {

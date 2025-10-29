@@ -115,10 +115,28 @@ const visitorRequestSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: {
-        values: ["pending", "approved", "declined", "checked_in", "checked_out", "expired"],
-        message: "Status must be pending, approved, declined, checked_in, checked_out, or expired",
+        values: ["pending", "approved", "declined", "checked_in", "checked_out", "expired", "pending_division_approval"],
+        message: "Status must be pending, approved, declined, checked_in, checked_out, expired, or pending_division_approval",
       },
       default: "pending",
+    },
+    approvalType: {
+      type: String,
+      enum: ["own_risk", "division_approval"],
+      required: function() {
+        return this.status === "approved" || this.status === "pending_division_approval";
+      }
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    approvedAt: {
+      type: Date,
+    },
+    approvalComments: {
+      type: String,
+      maxlength: [500, "Approval comments cannot exceed 500 characters"],
     },
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -147,6 +165,18 @@ const visitorRequestSchema = new mongoose.Schema(
       required: [true, 'Location is required'],
       trim: true,
     },
+    gateAssignment: {
+      type: String,
+      enum: ['Gate 1', 'Gate 2', 'Gate 3'],
+      required: [true, 'Gate assignment is required'],
+      trim: true,
+    },
+    searchRequired: {
+      type: String,
+      enum: ['required', 'not_required'],
+      default: 'not_required',
+      required: [true, 'Search requirement is required'],
+    },
   },
   {
     timestamps: true,
@@ -159,6 +189,8 @@ visitorRequestSchema.index({ department: 1 })
 visitorRequestSchema.index({ scheduledDate: 1 })
 visitorRequestSchema.index({ requestedBy: 1 })
 visitorRequestSchema.index({ approvalCode: 1 })
+visitorRequestSchema.index({ gateAssignment: 1 })
+visitorRequestSchema.index({ searchRequired: 1 })
 
 // Generate approval code when approved
 visitorRequestSchema.pre("save", function (next) {

@@ -12,8 +12,7 @@ const CreateRequest: React.FC = () => {
     visitorEmail: "",
     purpose: "",
     itemsBrought: "",
-    visitDurationHours: 1,
-    visitDurationDays: 0,
+
     scheduledDate: "",
     scheduledTime: "",
     priority: "medium",
@@ -28,6 +27,8 @@ const CreateRequest: React.FC = () => {
   const [originDepartment, setOriginDepartment] = useState("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [otherItems, setOtherItems] = useState("");
+  const [gateAssignment, setGateAssignment] = useState("");
+  const [searchRequired, setSearchRequired] = useState("not_required");
 
   const commonItems = ["USB", "Laptop", "Phone", "Tablet", "Camera", "Documents", "Bag"];
 
@@ -74,13 +75,14 @@ const CreateRequest: React.FC = () => {
       formData.append("visitorEmail", form.visitorEmail);
       formData.append("purpose", form.purpose);
       formData.append("itemsBrought", allItems.join(", "));
-      formData.append("visitDurationHours", String(form.visitDurationHours));
-      formData.append("visitDurationDays", String(form.visitDurationDays));
+
       formData.append("scheduledDate", form.scheduledDate);
       formData.append("scheduledTime", form.scheduledTime);
       formData.append("priority", form.priority);
       formData.append("nationalId", form.nationalId);
       formData.append("location", location);
+      formData.append("gateAssignment", gateAssignment);
+      formData.append("searchRequired", searchRequired);
       formData.append("isGroupVisit", isGroupVisit.toString());
       if (isGroupVisit) {
         formData.append("companyName", companyName);
@@ -98,8 +100,7 @@ const CreateRequest: React.FC = () => {
         visitorEmail: "",
         purpose: "",
         itemsBrought: "",
-        visitDurationHours: 1,
-        visitDurationDays: 0,
+
         scheduledDate: "",
         scheduledTime: "",
         priority: "medium",
@@ -112,6 +113,8 @@ const CreateRequest: React.FC = () => {
       setCompanyName("");
       setGroupSize(1);
       setOriginDepartment("");
+      setGateAssignment("");
+      setSearchRequired("not_required");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to submit request");
     } finally {
@@ -178,16 +181,7 @@ const CreateRequest: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Visit Duration (Hours)</label>
-                <input name="visitDurationHours" type="number" min="0" value={form.visitDurationHours} onChange={handleChange} className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Visit Duration (Days)</label>
-                <input name="visitDurationDays" type="number" min="0" value={form.visitDurationDays} onChange={handleChange} className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" />
-              </div>
-            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Scheduled Date</label>
@@ -260,12 +254,30 @@ const CreateRequest: React.FC = () => {
                 />
               </div>
             )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                <select id="location" name="location" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={location} onChange={e => setLocation(e.target.value)} disabled={loading}>
+                  <option value="">Select a location</option>
+                  <option value="Wollo Sefer">Wollo Sefer</option>
+                  <option value="Operation">Operation</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="gateAssignment" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Gate Assignment</label>
+                <select id="gateAssignment" name="gateAssignment" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={gateAssignment} onChange={e => setGateAssignment(e.target.value)} disabled={loading}>
+                  <option value="">Select a gate</option>
+                  <option value="Gate 1">Gate 1</option>
+                  <option value="Gate 2">Gate 2</option>
+                  <option value="Gate 3">Gate 3</option>
+                </select>
+              </div>
+            </div>
             <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-              <select id="location" name="location" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={location} onChange={e => setLocation(e.target.value)} disabled={loading}>
-                <option value="">Select a location</option>
-                <option value="Wollo Sefer">Wollo Sefer</option>
-                <option value="Operation">Operation</option>
+              <label htmlFor="searchRequired" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Search Requirement</label>
+              <select id="searchRequired" name="searchRequired" required className="input-field mt-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700" value={searchRequired} onChange={e => setSearchRequired(e.target.value)} disabled={loading}>
+                <option value="not_required">Not Required</option>
+                <option value="required">Required</option>
               </select>
             </div>
             <div>
